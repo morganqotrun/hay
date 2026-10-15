@@ -31,19 +31,22 @@ export default function Avatar({
   }
 
   const ringColors = {
-    coral: 'ring-coral ring-offset-2 ring-offset-app',
-    magenta: 'ring-magenta ring-offset-2 ring-offset-app',
-    mustard: 'ring-mustard ring-offset-2 ring-offset-app',
-    lime: 'ring-lime ring-offset-2 ring-offset-app',
-    biru: 'ring-biru ring-offset-2 ring-offset-app',
-    ungu: 'ring-ungu ring-offset-2 ring-offset-app',
+    coral: 'ring-2 ring-[#FF5A36] ring-offset-2 ring-offset-app',
+    magenta: 'ring-2 ring-[#E8467C] ring-offset-2 ring-offset-app',
+    mustard: 'ring-2 ring-[#FFB627] ring-offset-2 ring-offset-app',
+    lime: 'ring-2 ring-[#8CC63F] ring-offset-2 ring-offset-app',
+    biru: 'ring-2 ring-[#3B8FE8] ring-offset-2 ring-offset-app',
+    ungu: 'ring-2 ring-[#9B6DE8] ring-offset-2 ring-offset-app',
   }
 
-  const activeRing = circleRing !== 'none' || hasRing
-    ? ringColors[circleRing] || 'ring-coral ring-offset-2 ring-offset-app'
+  const isHex = typeof circleRing === 'string' && circleRing.startsWith('#')
+  const activeRingClass = !isHex && (circleRing !== 'none' || hasRing)
+    ? ringColors[circleRing] || 'ring-2 ring-[#FF5A36] ring-offset-2 ring-offset-app'
     : ''
 
-  const ringWidth = (circleRing !== 'none' || hasRing) ? 'ring-2' : ''
+  const hexRingStyle = isHex
+    ? { outline: `2.5px solid ${circleRing}`, outlineOffset: '2px' }
+    : {}
 
   // Fallback initials
   const initials = name
@@ -58,7 +61,8 @@ export default function Avatar({
   return (
     <div className={`relative inline-flex shrink-0 ${className}`}>
       <div
-        className={`relative rounded-full overflow-hidden flex items-center justify-center font-bold select-none border border-border/40 shadow-soft-sm ${sizeMap[size]} ${ringWidth} ${activeRing} bg-surface-subtle text-main`}
+        style={hexRingStyle}
+        className={`relative rounded-full overflow-hidden flex items-center justify-center font-bold select-none border border-border/40 shadow-soft-sm ${sizeMap[size]} ${activeRingClass} bg-surface-subtle text-main`}
       >
         {src ? (
           <img

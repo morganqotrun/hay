@@ -37,10 +37,10 @@ export default function Card({
     ungu: 'border-l-4 border-l-ungu',
   }
 
-  // Asymmetric subtle top corner radius or organic padding
+  // Design System Standard: Card (rounded-2xl)
   const cornerStyles = asymmetric
-    ? 'rounded-tl-[24px] rounded-br-[24px] rounded-tr-xl rounded-bl-xl'
-    : 'rounded-card'
+    ? 'rounded-tl-3xl rounded-br-3xl rounded-tr-xl rounded-bl-xl'
+    : 'rounded-2xl'
 
   return (
     <div

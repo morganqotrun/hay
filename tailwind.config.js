@@ -57,6 +57,23 @@ export default {
           subtle: 'rgba(155, 109, 232, 0.15)',
         },
 
+        // Brand Blue-Cyan Gradient Tokens (#3B8FE8 to #3ED9E8)
+        brand: {
+          blue: '#3B8FE8',
+          cyan: '#3ED9E8',
+          gradient: 'linear-gradient(135deg, #3B8FE8 0%, #3ED9E8 100%)',
+        },
+
+        // Mood Tokens (WAJIB SOLID & KONTRAS TINGGI, Teks Putih)
+        mood: {
+          senang: '#FFB627',   // mustard
+          santai: '#3ED9E8',   // biru muda
+          sibuk: '#8CC63F',    // lime
+          lelah: '#9B6DE8',    // ungu
+          sedih: '#2B5FA8',    // biru tua
+          semangat: '#FF5A36', // coral
+        },
+
         // Brand Base Hay Tokens
         hay: {
           50: '#FDF8F3',

@@ -10,13 +10,14 @@
 .theme-cerah {
   color-scheme: light;
   --color-bg: #FDF8F3;
+  --color-bg-gradient: linear-gradient(180deg, #FDF8F3 0%, #F9F2EA 100%);
   --color-surface: #FFFFFF;
   --color-surface-elevated: #FFFFFF;
   --color-surface-subtle: #F6EFE7;
   --color-text: #1F1D2B;
   --color-text-muted: #7A7689;
   --color-border: #EDE4DA;
-  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg: rgba(255, 255, 255, 0.88);
   --nav-bg: rgba(255, 255, 255, 0.94);
   --nav-border: #EDE4DA;
 }
@@ -24,16 +25,17 @@
 .theme-malam,
 .dark {
   color-scheme: dark;
-  --color-bg: #17162A;
-  --color-surface: #232139;
-  --color-surface-elevated: #2C2947;
-  --color-surface-subtle: #1D1C34;
+  --color-bg: #0A0A12;
+  --color-bg-gradient: linear-gradient(180deg, #0A0A12 0%, #0D0E1A 100%);
+  --color-surface: #161726;
+  --color-surface-elevated: #1D1E30;
+  --color-surface-subtle: #121320;
   --color-text: #FFFFFF;
-  --color-text-muted: #8B87A5;
-  --color-border: #322F49;
-  --glass-bg: rgba(35, 33, 57, 0.85);
-  --nav-bg: rgba(23, 22, 42, 0.94);
-  --nav-border: #322F49;
+  --color-text-muted: #B8B8C4;
+  --color-border: #232339;
+  --glass-bg: rgba(22, 23, 38, 0.88);
+  --nav-bg: rgba(22, 23, 38, 0.94);
+  --nav-border: #232339;
 }
 
 /* ==============================================================================

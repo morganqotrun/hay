@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   phone TEXT,
   foto_url TEXT,
   bio TEXT,
-  tema_preferensi TEXT DEFAULT 'cerah',
+  tema_preferensi TEXT DEFAULT 'malam',
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.circles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   nama TEXT NOT NULL,
-  warna_hex TEXT DEFAULT '#C79E59',
+  warna_hex TEXT DEFAULT '#FF5A36',
   ikon TEXT DEFAULT 'users',
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -128,13 +128,15 @@ CREATE INDEX IF NOT EXISTS idx_journal_tanggal ON public.journal_entries(tanggal
 
 -- ==============================================================================
 -- 5. AUTOMATIC PROFILE TRIGGER (ON SIGNUP)
--- Membuat baris otomatis di public.users saat user registrasi di Supabase Auth
+-- Membuat baris otomatis di public.users saat user registrasi di Supabase Auth,
+-- dan membuat circle default "Terdekat" (coral #FF5A36, ikon users).
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
   base_username TEXT;
   final_username TEXT;
+  default_circle_id UUID;
 BEGIN
   -- Generate fallback username dari email atau metadata
   base_username := COALESCE(
@@ -148,15 +150,29 @@ BEGIN
     final_username := base_username || '_' || SUBSTRING(NEW.id::text, 1, 5);
   END IF;
 
-  INSERT INTO public.users (id, nama, username, email, foto_url, tema_preferensi)
+  -- 1. Insert ke tabel public.users
+  INSERT INTO public.users (id, nama, username, email, phone, foto_url, bio, tema_preferensi)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'nama', NEW.raw_user_meta_data->>'full_name', final_username),
     final_username,
     NEW.email,
+    NEW.raw_user_meta_data->>'phone',
     NEW.raw_user_meta_data->>'avatar_url',
-    COALESCE(NEW.raw_user_meta_data->>'tema_preferensi', 'cerah')
-  );
+    COALESCE(NEW.raw_user_meta_data->>'bio', 'Cerita hari ini, apa adanya.'),
+    COALESCE(NEW.raw_user_meta_data->>'tema_preferensi', 'malam')
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  -- 2. Otomatis buat circle default "Terdekat" (coral #FF5A36, ikon users)
+  default_circle_id := gen_random_uuid();
+  INSERT INTO public.circles (id, owner_id, nama, warna_hex, ikon)
+  VALUES (default_circle_id, NEW.id, 'Terdekat', '#FF5A36', 'users');
+
+  -- 3. Masukkan pemilik sebagai anggota circle pertamanya
+  INSERT INTO public.circle_members (circle_id, user_id)
+  VALUES (default_circle_id, NEW.id);
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -439,6 +455,58 @@ CREATE POLICY "Friendships: User terlibat bisa membatalkan/menghapus pertemanan"
   USING (auth.uid() = requester_id OR auth.uid() = receiver_id);
 
 -- ==============================================================================
+-- 8. STORAGE BUCKETS & POLICIES ('avatars' & 'posts')
+-- ==============================================================================
+-- Buat bucket avatars & posts jika belum ada
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('posts', 'posts', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Storage Policies: Avatars
+CREATE POLICY "Avatars: Publik dapat melihat foto profil"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'avatars');
+
+CREATE POLICY "Avatars: User terautentikasi dapat mengunggah avatar"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'avatars');
+
+CREATE POLICY "Avatars: User dapat memperbarui avatarnya"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'avatars');
+
+CREATE POLICY "Avatars: User dapat menghapus avatarnya"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'avatars');
+
+-- Storage Policies: Posts
+CREATE POLICY "Posts: Publik / terautentikasi dapat melihat foto post"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'posts');
+
+CREATE POLICY "Posts: User terautentikasi dapat mengunggah foto post"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'posts');
+
+CREATE POLICY "Posts: User dapat memperbarui foto post"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'posts');
+
+CREATE POLICY "Posts: User dapat menghapus foto post miliknya"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'posts');
+
+-- ==============================================================================
 -- SELESAI
--- Skema tabel, indeks, trigger pendaftaran, dan RLS policies telah aktif.
+-- Skema tabel, indeks, trigger pendaftaran, RLS policies, dan Storage telah aktif.
 -- ==============================================================================

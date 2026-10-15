@@ -2,10 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from '../lib/supabase'
 
 const ThemeContext = createContext({
-  theme: 'cerah',
+  theme: 'malam',
   toggleTheme: () => {},
   setTheme: () => {},
-  isMalam: false,
+  isMalam: true,
 })
 
 const THEME_STORAGE_KEY = 'hay_theme'
@@ -17,8 +17,8 @@ export function ThemeProvider({ children }) {
     if (stored === 'cerah' || stored === 'malam') {
       return stored
     }
-    // 2. Default: 'cerah' (sesuai spesifikasi)
-    return 'cerah'
+    // 2. Default: 'malam' (sesuai spesifikasi tema default)
+    return 'malam'
   })
 
   // Sinkronkan class ke <html> element

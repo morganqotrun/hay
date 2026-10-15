@@ -109,9 +109,29 @@ Akses di browser / Postman: `http://localhost:5000/api/health`
 Proyek ini telah dilengkapi dengan `vercel.json` dan folder `api/`:
 1. Push kode ke repository GitHub / GitLab.
 2. Hubungkan repository di [Vercel](https://vercel.com).
-3. Tambahkan environment variable di Vercel:
+3. Tambahkan environment variable di Settings -> Environment Variables Vercel:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
-4. Deploy! Vercel akan otomatis mem-build frontend dan mengekspos backend Express melalui serverless function di `/api/*`.
+4. Deploy! Vercel otomatis menjalankan `npm run build` dan menyajikan SPA client-side routing via `vercel.json`.
+
+---
+
+## ✅ Checklist Pengujian Final
+
+1. **Skema & RLS Supabase**:
+   - [x] RLS aktif di seluruh 8 tabel (`users`, `friendships`, `circles`, `circle_members`, `posts`, `post_circles`, `reactions`, `journal_entries`).
+   - [x] Storage Buckets `avatars` dan `posts` terkonfigurasi dengan policy upload & select.
+   - [x] Trigger otomatis registrasi user (`handle_new_user`) membuat baris profil dan circle bawaan `"Terdekat"` (`coral #FF5A36`).
+2. **Sistem Desain & Tema**:
+   - [x] Tema Malam (default `#0A0A12` ke `#0D0E1A`, surface card `#161726`, border `#232339`, teks putih & sekunder `#B8B8C4`).
+   - [x] Tema Cerah (background `#FDF8F3`, surface `#FFFFFF`, teks `#1F1D2B`).
+   - [x] Warna solid kontras tinggi: Circle (coral, magenta, mustard, lime, biru, ungu) & Mood (Senang, Santai, Sibuk, Lelah, Sedih, Semangat).
+   - [x] Responsif untuk Mobile (w-full), Tablet (max-w-lg), dan Desktop (max-w-xl).
+3. **Uji Alur Pengguna (2 Akun Berbeda)**:
+   - [x] **Akun 1**: Daftar user baru -> circle "Terdekat" otomatis tercipta -> Buat Post dengan foto & mood -> Bagikan ke circle "Terdekat".
+   - [x] **Akun 2**: Cari Akun 1 via `/cari` -> Kirim permintaan pertemanan -> Akun 1 menerima di `/notifikasi`.
+   - [x] Masukkan Akun 2 ke circle "Terdekat" milik Akun 1 -> Akun 2 kini dapat melihat postingan privat Akun 1 di feed Beranda.
+   - [x] Reaksi Love & Modal Liker: Akun 2 memberi reaksi hati -> Akun 1 melihat jumlah suka bertambah & nama Akun 2 muncul di daftar liker.
+   - [x] Jurnal Privat: Tulis entri di `/jurnal` -> Catatan 100% terisolasi dan tidak dapat dibaca oleh user lain.
