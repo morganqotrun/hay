@@ -3,19 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   User,
   Camera,
-  Edit3,
+  Pencil,
   Moon,
   Sun,
-  LogOut,
-  Users,
-  Image as ImageIcon,
-  Check,
-  X,
-  AlertCircle,
-  Loader2,
+  SignOut,
+  UsersThree,
+  Image,
   Calendar,
-  Sparkles,
-} from 'lucide-react'
+  X,
+  WarningCircle,
+  Gear,
+} from '@phosphor-icons/react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../lib/supabase'
@@ -23,7 +21,7 @@ import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import Avatar from '../components/ui/Avatar'
 
-export default function ProfilePage({ onNavigateLogin }) {
+export default function ProfilePage({ onNavigateLogin, onNavigateAdmin }) {
   const { user, profile, updateProfile, signOut, refreshProfile } = useAuth()
   const { theme, toggleTheme, isMalam } = useTheme()
 
@@ -53,26 +51,26 @@ export default function ProfilePage({ onNavigateLogin }) {
 
       try {
         // 1. Hitung jumlah post milik user
-        const { count: postsTotal, error: postErr } = await supabase
+        const { count: postsTotal } = await supabase
           .from('posts')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
 
         // 2. Hitung jumlah teman (friendships accepted)
-        const { data: friendships, error: friendErr } = await supabase
+        const { data: friendships } = await supabase
           .from('friendships')
           .select('id')
           .eq('status', 'accepted')
           .or(`requester_id.eq.${user.id},receiver_id.eq.${user.id}`)
 
         if (isMounted) {
-          setPostCount(postErr ? 3 : (postsTotal ?? 0))
-          setFriendCount(friendErr ? 5 : (friendships?.length ?? 0))
+          setPostCount(postsTotal ?? 0)
+          setFriendCount(friendships?.length ?? 0)
         }
       } catch (err) {
         if (isMounted) {
-          setPostCount(2)
-          setFriendCount(4)
+          setPostCount(0)
+          setFriendCount(0)
         }
       } finally {
         if (isMounted) setIsLoadingCounts(false)
@@ -95,20 +93,20 @@ export default function ProfilePage({ onNavigateLogin }) {
     setIsEditing(true)
   }
 
-  // Upload avatar to 'avatars' storage bucket
+  // Upload avatar to 'avatars' storage bucket in folder auth.uid()
   const handleAvatarFileChange = async (e) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file || !user?.id) return
 
     setUploadingAvatar(true)
     setEditError('')
 
     try {
       const fileExt = file.name.split('.').pop()
-      const fileName = `${user?.id || 'demo'}_${Date.now()}.${fileExt}`
-      const filePath = `avatars/${fileName}`
+      const fileName = `${Date.now()}.${fileExt}`
+      const filePath = `${user.id}/${fileName}`
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -116,7 +114,6 @@ export default function ProfilePage({ onNavigateLogin }) {
         })
 
       if (uploadError) {
-        // Fallback FileReader local preview jika storage belum disetup
         const reader = new FileReader()
         reader.onloadend = () => {
           setEditFotoUrl(reader.result)
@@ -141,7 +138,7 @@ export default function ProfilePage({ onNavigateLogin }) {
   const handleSaveProfile = async (e) => {
     e.preventDefault()
     if (!editNama.trim()) {
-      setEditError('Nama tidak boleh kosong.')
+      setEditError('Nama profil tidak boleh kosong.')
       return
     }
 
@@ -149,21 +146,21 @@ export default function ProfilePage({ onNavigateLogin }) {
     setEditError('')
 
     try {
-      const { error } = await updateProfile({
+      const updates = {
         nama: editNama.trim(),
         bio: editBio.trim(),
         phone: editPhone.trim(),
         foto_url: editFotoUrl,
-      })
-
-      if (error) {
-        setEditError(error.message || 'Gagal menyimpan perubahan profil.')
-      } else {
-        setIsEditing(false)
-        refreshProfile()
       }
+
+      const { error } = await updateProfile(updates)
+      if (error) throw error
+
+      if (refreshProfile) await refreshProfile()
+      setIsEditing(false)
     } catch (err) {
-      setEditError('Terjadi kendala saat memperbarui profil.')
+      console.error(err)
+      setEditError('Yah, gagal. Coba lagi sebentar.')
     } finally {
       setIsSaving(false)
     }
@@ -184,58 +181,55 @@ export default function ProfilePage({ onNavigateLogin }) {
   return (
     <div className="p-4 space-y-5 pb-24">
       {/* Profile Overview Card */}
-      <Card variant="elevated" className="p-6 text-center space-y-4">
-        {/* Avatar with Solid Brand Ring */}
+      <Card variant="default" className="p-6 text-center space-y-4">
+        {/* Avatar with Solid Ring */}
         <div className="relative inline-block mx-auto">
           <Avatar
             src={profile?.foto_url}
             name={profile?.nama || 'Pengguna Hay!'}
             size="xl"
-            circleRing="coral"
-            hasRing={true}
-            className="shadow-md"
           />
           <button
             onClick={openEditModal}
             aria-label="Ubah foto"
-            className="absolute bottom-0 right-0 p-2 rounded-full bg-gradient-to-r from-[#3B8FE8] to-[#3ED9E8] text-white shadow-md hover:scale-105 active:scale-95 transition-all"
+            className="absolute bottom-0 right-0 p-2 rounded-full bg-[#FF6A3D] text-[#15110E] shadow-sm hover:scale-105 active:scale-95 transition-transform"
           >
-            <Camera className="w-3.5 h-3.5 stroke-[2.5]" />
+            <Camera size={16} weight="bold" />
           </button>
         </div>
 
         {/* User Info */}
-        <div className="space-y-1">
-          <h2 className="text-[20px] font-bold text-main tracking-tight leading-tight">
+        <div className="space-y-0.5">
+          <h2 className="font-serif text-xl font-bold text-main tracking-tight">
             {profile?.nama || 'Pengguna Hay!'}
           </h2>
-          <p className="text-[13px] font-medium text-[#3ED9E8]">
+          <p className="font-sans text-xs font-semibold text-accent">
             @{profile?.username || 'user'}
           </p>
         </div>
 
         {/* Bio */}
-        <p className="text-[13.5px] text-muted leading-relaxed max-w-xs mx-auto italic font-sans">
+        <p className="font-serif italic text-xs text-muted leading-relaxed max-w-xs mx-auto">
           "{profile?.bio || 'Belum ada bio singkat. Bagikan cerita harimu.'}"
         </p>
 
         {/* Counts: Teman & Post (Hitung Asli dari DB) */}
         <div className="grid grid-cols-2 gap-3 pt-2">
-          <div className="bg-surface-subtle p-3 rounded-2xl border border-border/80 flex flex-col items-center">
-            <span className="text-[18px] font-bold text-main">
+          <div className="bg-surface-2 p-3 rounded-[14px] border border-border flex flex-col items-center">
+            <span className="font-serif text-lg font-bold text-main">
               {isLoadingCounts ? '...' : friendCount}
             </span>
-            <span className="text-[11px] font-medium text-muted mt-0.5 flex items-center gap-1">
-              <Users className="w-3 h-3 text-[#3B8FE8]" /> Teman Terhubung
+            <span className="font-sans text-[11px] text-muted mt-0.5 flex items-center gap-1">
+              <UsersThree size={14} weight="bold" /> Teman
             </span>
           </div>
 
-          <div className="bg-surface-subtle p-3 rounded-2xl border border-border/80 flex flex-col items-center">
-            <span className="text-[18px] font-bold text-main">
+          <div className="bg-surface-2 p-3 rounded-[14px] border border-border flex flex-col items-center">
+            <span className="font-serif text-lg font-bold text-main">
               {isLoadingCounts ? '...' : postCount}
             </span>
-            <span className="text-[11px] font-medium text-muted mt-0.5 flex items-center gap-1">
-              <ImageIcon className="w-3 h-3 text-[#FF5A36]" /> Post Dibagikan
+            <span className="font-sans text-[11px] text-muted mt-0.5 flex items-center gap-1">
+              <Image size={14} weight="bold" /> Cerita
             </span>
           </div>
         </div>
@@ -247,7 +241,7 @@ export default function ProfilePage({ onNavigateLogin }) {
             size="md"
             fullWidth
             onClick={openEditModal}
-            leftIcon={<Edit3 className="w-4 h-4 text-[#3ED9E8]" />}
+            leftIcon={<Pencil size={16} weight="bold" />}
           >
             Edit Profil
           </Button>
@@ -256,20 +250,20 @@ export default function ProfilePage({ onNavigateLogin }) {
 
       {/* Preferences & Settings */}
       <div className="space-y-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted px-2">
-          Pengaturan & Tampilan
+        <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-muted px-2 block">
+          Pengaturan
         </span>
 
-        <Card variant="default" className="divide-y divide-border/60">
+        <Card variant="default" className="divide-y divide-border">
           {/* Theme Toggle (Cerah / Malam) */}
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-[#9B6DE8]/15 text-[#9B6DE8]">
-                {isMalam ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-[#FFB627]" />}
+              <div className="p-2.5 rounded-[12px] bg-surface-2 text-accent">
+                {isMalam ? <Moon size={20} weight="fill" /> : <Sun size={20} weight="fill" />}
               </div>
               <div>
-                <h3 className="text-[14px] font-semibold text-main">Tema Tampilan</h3>
-                <p className="text-[11px] text-muted">
+                <h3 className="font-sans text-sm font-semibold text-main">Tema Tampilan</h3>
+                <p className="font-sans text-xs text-muted">
                   Sedang aktif: <span className="font-bold capitalize">{theme}</span>
                 </p>
               </div>
@@ -279,155 +273,158 @@ export default function ProfilePage({ onNavigateLogin }) {
               variant="outline"
               size="sm"
               onClick={toggleTheme}
-              className="text-xs"
             >
-              Ubah ke {isMalam ? 'Cerah' : 'Malam'}
+              Ubah ke {isMalam ? 'Kertas' : 'Malam'}
             </Button>
           </div>
 
-          {/* Akun & Privasi Status */}
+          {/* Anggota Sejak */}
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-[#8CC63F]/15 text-[#8CC63F]">
-                <Calendar className="w-5 h-5" />
+              <div className="p-2.5 rounded-[12px] bg-surface-2 text-[#4FA05A]">
+                <Calendar size={20} weight="bold" />
               </div>
               <div>
-                <h3 className="text-[14px] font-semibold text-main">Anggota Sejak</h3>
-                <p className="text-[11px] text-muted">{joinDateFormatted}</p>
+                <h3 className="font-sans text-sm font-semibold text-main">Anggota Sejak</h3>
+                <p className="font-sans text-xs text-muted">{joinDateFormatted}</p>
               </div>
             </div>
-
-            <span className="text-[11px] font-bold text-[#8CC63F] bg-[#8CC63F]/10 px-2.5 py-1 rounded-full border border-[#8CC63F]/30">
-              Terverifikasi
+            <span className="font-serif text-xs font-bold text-[#4FA05A] bg-[#4FA05A]/10 px-2.5 py-1 rounded-full border border-[#4FA05A]/25">
+              Aktif
             </span>
           </div>
 
-          {/* Tombol Logout */}
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-[#FF5A36]/15 text-[#FF5A36]">
-                <LogOut className="w-5 h-5" />
+          {/* Kelola Teks Admin (Jika user is_admin) */}
+          {profile?.is_admin && onNavigateAdmin && (
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-[12px] bg-surface-2 text-accent">
+                  <Gear size={20} weight="bold" />
+                </div>
+                <div>
+                  <h3 className="font-sans text-sm font-semibold text-main">Kelola Teks</h3>
+                  <p className="font-sans text-xs text-muted">Kustomisasi teks dan mikrocopy aplikasi</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-[14px] font-semibold text-[#FF5A36]">Keluar Akun</h3>
-                <p className="text-[11px] text-muted">Hapus sesi lokal dari perangkat ini</p>
-              </div>
-            </div>
 
-            <button
-              onClick={handleLogout}
-              className="px-3.5 py-1.5 rounded-full border border-[#FF5A36]/40 text-[#FF5A36] hover:bg-[#FF5A36]/10 text-xs font-semibold transition-all active:scale-95"
-            >
-              Keluar
-            </button>
-          </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onNavigateAdmin}
+              >
+                Kelola
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
 
-      {/* Edit Profile Modal / Bottom Sheet */}
+      {/* Logout Action */}
+      <div className="pt-2">
+        <Button
+          variant="ghost"
+          size="md"
+          fullWidth
+          onClick={handleLogout}
+          leftIcon={<SignOut size={16} weight="bold" className="text-[#E8452C]" />}
+          className="text-[#E8452C] hover:bg-[#E8452C]/10"
+        >
+          Keluar dari Akun
+        </Button>
+      </div>
+
+      {/* Edit Profile Modal */}
       <AnimatePresence>
         {isEditing && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75">
             <motion.div
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
-              transition={{ duration: 0.25 }}
-              className="w-full max-w-lg bg-surface border border-border rounded-t-3xl sm:rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md bg-surface border border-border rounded-t-[22px] sm:rounded-[22px] p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-border/80">
-                <h3 className="text-[18px] font-bold text-main">Edit Profil Pribadi</h3>
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <h3 className="font-serif text-lg font-bold text-main">
+                  Edit Profil
+                </h3>
                 <button
                   onClick={() => setIsEditing(false)}
-                  className="p-1.5 rounded-full hover:bg-surface-subtle text-muted hover:text-main"
+                  className="p-1 rounded-full text-muted hover:text-main"
                 >
-                  <X className="w-5 h-5" />
+                  <X size={18} weight="bold" />
                 </button>
               </div>
 
               {editError && (
-                <div className="p-3 rounded-xl bg-[#FF5A36]/15 border border-[#FF5A36]/30 text-xs text-[#FF5A36] flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-[#E8452C]/10 text-[#E8452C] rounded-[12px] flex items-center gap-2 text-xs">
+                  <WarningCircle size={16} weight="bold" className="shrink-0" />
                   <span>{editError}</span>
                 </div>
               )}
 
               <form onSubmit={handleSaveProfile} className="space-y-4">
-                {/* Foto Profil Preview & Upload */}
-                <div className="flex items-center gap-4 py-2">
+                {/* Upload Foto Profil */}
+                <div className="flex flex-col items-center gap-2">
                   <Avatar
                     src={editFotoUrl}
-                    name={editNama}
-                    size="lg"
-                    circleRing="coral"
-                    hasRing={true}
+                    name={editNama || 'Saya'}
+                    size="xl"
                   />
-
-                  <div className="space-y-1.5 flex-1">
-                    <label className="text-xs font-bold text-main block">
-                      Foto Profil
-                    </label>
-                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-subtle border border-border hover:bg-surface-elevated text-xs font-semibold text-main cursor-pointer transition-all active:scale-95">
-                      <Camera className="w-3.5 h-3.5 text-[#3ED9E8]" />
-                      <span>{uploadingAvatar ? 'Mengunggah...' : 'Pilih Foto Baru'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarFileChange}
-                        disabled={uploadingAvatar}
-                        className="hidden"
-                      />
-                    </label>
-                    <p className="text-[10px] text-muted">
-                      Disimpan aman di bucket 'avatars' Supabase.
-                    </p>
-                  </div>
+                  <label className="text-xs font-semibold text-accent cursor-pointer hover:underline flex items-center gap-1.5 mt-1">
+                    <Camera size={14} weight="bold" />
+                    <span>{uploadingAvatar ? 'Mengunggah...' : 'Ubah Foto Profil'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFileChange}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
 
-                {/* Field Nama */}
+                {/* Nama Lengkap */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
+                  <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
                     Nama Lengkap
                   </label>
                   <input
                     type="text"
                     value={editNama}
                     onChange={(e) => setEditNama(e.target.value)}
-                    required
-                    className="w-full bg-surface-subtle text-main text-body px-3.5 py-2.5 rounded-xl border border-border focus:outline-none focus:border-[#3B8FE8]"
+                    className="w-full bg-surface-2 text-main font-sans text-sm p-3.5 rounded-[14px] border border-border focus:outline-none focus:border-accent"
                   />
                 </div>
 
-                {/* Field Bio */}
+                {/* Bio Singkat */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
+                  <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
                     Bio Singkat
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={editBio}
                     onChange={(e) => setEditBio(e.target.value)}
                     placeholder="Ceritakan sedikit tentang dirimu..."
-                    className="w-full bg-surface-subtle text-main text-body px-3.5 py-2.5 rounded-xl border border-border focus:outline-none focus:border-[#3B8FE8] resize-none"
+                    className="w-full bg-surface-2 text-main font-sans text-sm p-3.5 rounded-[14px] border border-border focus:outline-none focus:border-accent resize-none"
                   />
                 </div>
 
-                {/* Field Nomor Telepon */}
+                {/* Nomor Telepon */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
+                  <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
                     Nomor Telepon
                   </label>
                   <input
                     type="tel"
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
-                    placeholder="08123456789"
-                    className="w-full bg-surface-subtle text-main text-body px-3.5 py-2.5 rounded-xl border border-border focus:outline-none focus:border-[#3B8FE8]"
+                    placeholder="08xxxxxxxxxx"
+                    className="w-full bg-surface-2 text-main font-sans text-sm p-3.5 rounded-[14px] border border-border focus:outline-none focus:border-accent"
                   />
                 </div>
 
-                {/* Actions */}
-                <div className="pt-2 flex items-center gap-3">
+                <div className="pt-2 flex items-center gap-2">
                   <Button
                     type="button"
                     variant="ghost"
@@ -436,14 +433,13 @@ export default function ProfilePage({ onNavigateLogin }) {
                   >
                     Batal
                   </Button>
-
                   <Button
                     type="submit"
-                    variant="gradient"
+                    variant="primary"
                     isLoading={isSaving}
                     className="flex-1"
                   >
-                    Simpan Perubahan
+                    Simpan
                   </Button>
                 </div>
               </form>

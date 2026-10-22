@@ -1,14 +1,11 @@
 import React from 'react'
-import { Home, BookOpen, Plus, Users, User } from 'lucide-react'
+import { House, Notebook, UsersThree, User, Plus } from '@phosphor-icons/react'
 
 /**
- * 5-Item Studio Mobile Bottom Navigation
- * Features a floating '+' action button elevated prominently above the bar.
- * 
- * @param {Object} props
- * @param {string} props.activeTab - 'beranda' | 'jurnal' | 'circle' | 'profil'
- * @param {Function} props.setActiveTab
- * @param {Function} [props.onFabClick] - Handler for the center floating '+' button
+ * Human-Crafted Bottom Navigation
+ * - Floating, SOLID surface-2 with 1.5px border (no blur), radius 22px
+ * - Center '+' button: Jingga rounded-square with hard shadow, protruding upward, rotated 3deg
+ * - Phosphor icons with regular weight, fill when active
  */
 export default function BottomNav({
   activeTab = 'beranda',
@@ -16,32 +13,32 @@ export default function BottomNav({
   onFabClick,
 }) {
   const leftItems = [
-    { id: 'beranda', label: 'Beranda', icon: Home },
-    { id: 'jurnal', label: 'Jurnal', icon: BookOpen },
+    { id: 'beranda', label: 'Beranda', icon: House },
+    { id: 'jurnal', label: 'Jurnal', icon: Notebook },
   ]
 
   const rightItems = [
-    { id: 'circle', label: 'Circle', icon: Users },
+    { id: 'circle', label: 'Circle', icon: UsersThree },
     { id: 'profil', label: 'Profil', icon: User },
   ]
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-40 max-w-md md:max-w-lg mx-auto pointer-events-none px-4 pb-4">
       <div className="relative pointer-events-auto">
-        {/* Floating Center '+' Button (Pill Gradient #3B8FE8 ke #3ED9E8, Menonjol) */}
+        {/* Floating Center '+' Button (Kotak Membulat Jingga, Bayangan Keras, Diputar 3 derajat) */}
         <div className="absolute left-1/2 -top-6 -translate-x-1/2 z-50">
           <button
             type="button"
             onClick={onFabClick}
             aria-label="Buat Postingan Baru"
-            className="w-14 h-14 rounded-full bg-gradient-to-r from-[#3B8FE8] to-[#3ED9E8] text-white flex items-center justify-center shadow-[0_8px_25px_rgba(59,143,232,0.45)] border-4 border-app hover:scale-105 active:scale-90 transition-all duration-200 cursor-pointer group"
+            className="w-13 h-13 p-3 bg-[#FF6A3D] text-[#15110E] rounded-[16px] shadow-[0_4px_0_#B8431F] border-2 border-app flex items-center justify-center rotate-3 hover:rotate-6 active:translate-y-1 active:shadow-[0_1px_0_#B8431F] transition-all duration-150 cursor-pointer group"
           >
-            <Plus className="w-7 h-7 stroke-[2.8] group-hover:rotate-90 transition-transform duration-300" />
+            <Plus size={26} weight="bold" className="transition-transform group-hover:scale-110" />
           </button>
         </div>
 
-        {/* Main Floating Pill Navigation Bar */}
-        <nav className="h-16 bg-surface/90 backdrop-blur-2xl border border-border shadow-[0_10px_30px_rgba(0,0,0,0.18)] rounded-full px-4 flex items-center justify-between relative">
+        {/* Main Floating Navigation Bar (SOLID surface-2, border 1.5px, radius 22px, no blur) */}
+        <nav className="h-16 bg-surface-2 border-[1.5px] border-border shadow-nav-floating rounded-[22px] px-4 flex items-center justify-between relative">
           {/* Left Navigation Group */}
           <div className="flex items-center justify-around flex-1 pr-6">
             {leftItems.map((item) => {
@@ -51,14 +48,20 @@ export default function BottomNav({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab && setActiveTab(item.id)}
-                  className={`flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-full transition-all duration-150 cursor-pointer ${
+                  className={`flex flex-col items-center justify-center gap-1 py-1 px-3 transition-all duration-150 cursor-pointer ${
                     isActive
-                      ? 'text-[#3ED9E8] font-bold scale-105'
+                      ? 'text-[#FF6A3D] font-bold'
                       : 'text-muted hover:text-main'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 transition-transform ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
-                  <span className="text-[11px] tracking-tight leading-none">{item.label}</span>
+                  <Icon
+                    size={22}
+                    weight={isActive ? 'fill' : 'regular'}
+                    className="transition-transform"
+                  />
+                  <span className="text-[11px] font-sans tracking-tight leading-none">
+                    {item.label}
+                  </span>
                 </button>
               )
             })}
@@ -76,14 +79,20 @@ export default function BottomNav({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab && setActiveTab(item.id)}
-                  className={`flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-full transition-all duration-150 cursor-pointer ${
+                  className={`flex flex-col items-center justify-center gap-1 py-1 px-3 transition-all duration-150 cursor-pointer ${
                     isActive
-                      ? 'text-[#3ED9E8] font-bold scale-105'
+                      ? 'text-[#FF6A3D] font-bold'
                       : 'text-muted hover:text-main'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 transition-transform ${isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
-                  <span className="text-[11px] tracking-tight leading-none">{item.label}</span>
+                  <Icon
+                    size={22}
+                    weight={isActive ? 'fill' : 'regular'}
+                    className="transition-transform"
+                  />
+                  <span className="text-[11px] font-sans tracking-tight leading-none">
+                    {item.label}
+                  </span>
                 </button>
               )
             })}

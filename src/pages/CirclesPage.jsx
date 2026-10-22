@@ -1,54 +1,43 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Users,
+  UsersThree,
   Plus,
-  Home,
-  Briefcase,
   Heart,
+  House,
   Star,
+  Briefcase,
   Coffee,
-  Music,
-  Sparkles,
-  Lock,
-  Trash2,
-  Edit2,
+  MusicNotes,
+  Sparkle,
+  Trash,
+  Pencil,
   UserPlus,
   UserMinus,
   Check,
   X,
-  ShieldCheck,
-  AlertCircle,
-  Loader2,
+  Lock,
   ArrowLeft,
-} from 'lucide-react'
+  WarningCircle,
+} from '@phosphor-icons/react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import Button from '../components/ui/Button'
-import Chip from '../components/ui/Chip'
 import Card from '../components/ui/Card'
 import Avatar from '../components/ui/Avatar'
+import { CIRCLE_COLORS, getCircleColorByHexOrName } from '../constants/circleColors'
+import { EmptyFriendsSketch } from '../components/ui/EmptyStateIllustrations'
 
-// Preset Ikon Circle
+// Preset Ikon Circle Phosphor
 const ICON_PRESETS = [
-  { id: 'users', label: 'Circle', icon: Users },
+  { id: 'users', label: 'Circle', icon: UsersThree },
   { id: 'heart', label: 'Cinta/Keluarga', icon: Heart },
-  { id: 'home', label: 'Rumah', icon: Home },
+  { id: 'home', label: 'Rumah', icon: House },
   { id: 'star', label: 'Spesial', icon: Star },
   { id: 'briefcase', label: 'Kantor', icon: Briefcase },
   { id: 'coffee', label: 'Nongkrong', icon: Coffee },
-  { id: 'music', label: 'Hobi', icon: Music },
-  { id: 'balloon', label: 'Momen Seru', icon: Sparkles },
-]
-
-// Palet Identitas Circle (WAJIB SOLID & KONTRAS TINGGI)
-const COLOR_PRESETS = [
-  { id: 'coral', name: 'Coral', hex: '#FF5A36' },
-  { id: 'magenta', name: 'Magenta', hex: '#E8467C' },
-  { id: 'mustard', name: 'Mustard', hex: '#FFB627' },
-  { id: 'lime', name: 'Lime', hex: '#8CC63F' },
-  { id: 'biru', name: 'Biru', hex: '#3B8FE8' },
-  { id: 'ungu', name: 'Ungu', hex: '#9B6DE8' },
+  { id: 'music', label: 'Hobi', icon: MusicNotes },
+  { id: 'sparkle', label: 'Momen', icon: Sparkle },
 ]
 
 export default function CirclesPage() {
@@ -61,7 +50,7 @@ export default function CirclesPage() {
   const [editingCircle, setEditingCircle] = useState(null)
   const [circleNama, setCircleNama] = useState('')
   const [selectedIkon, setSelectedIkon] = useState('users')
-  const [selectedWarna, setSelectedWarna] = useState('#FF5A36')
+  const [selectedWarna, setSelectedWarna] = useState(CIRCLE_COLORS[0].hex)
   const [modalLoading, setModalLoading] = useState(false)
   const [modalError, setModalError] = useState('')
 
@@ -81,7 +70,6 @@ export default function CirclesPage() {
 
     setIsLoading(true)
     try {
-      // Ambil circle milik user atau di mana user adalah anggotanya
       const { data, error } = await supabase
         .from('circles')
         .select(`
@@ -98,48 +86,14 @@ export default function CirclesPage() {
         `)
         .order('created_at', { ascending: true })
 
-      if (error || !data || data.length === 0) {
-        // Fallback default circle jika Supabase mock / baru
-        const defaultCircles = [
-          {
-            id: 'c-terdekat',
-            owner_id: user.id,
-            nama: 'Terdekat',
-            warna_hex: '#FF5A36',
-            ikon: 'users',
-            circle_members: [{ id: 'cm-1', user_id: user.id }],
-            memberCount: 3,
-            isDefault: true,
-          },
-          {
-            id: 'c-keluarga',
-            owner_id: user.id,
-            nama: 'Keluarga',
-            warna_hex: '#E8467C',
-            ikon: 'heart',
-            circle_members: [{ id: 'cm-2', user_id: user.id }],
-            memberCount: 4,
-            isDefault: false,
-          },
-          {
-            id: 'c-kolega',
-            owner_id: user.id,
-            nama: 'Kolega Kerja',
-            warna_hex: '#3B8FE8',
-            ikon: 'briefcase',
-            circle_members: [{ id: 'cm-3', user_id: user.id }],
-            memberCount: 5,
-            isDefault: false,
-          },
-        ]
-        setCircles(defaultCircles)
+      if (error || !data) {
+        setCircles([])
       } else {
-        const mapped = data.map((c) => ({
+        const enriched = data.map((c) => ({
           ...c,
-          memberCount: c.circle_members?.length || 1,
-          isDefault: c.nama.toLowerCase() === 'terdekat',
+          memberCount: (c.circle_members?.length || 0) + 1,
         }))
-        setCircles(mapped)
+        setCircles(enriched)
       }
     } catch (err) {
       console.error(err)
@@ -157,7 +111,7 @@ export default function CirclesPage() {
     setEditingCircle(null)
     setCircleNama('')
     setSelectedIkon('users')
-    setSelectedWarna('#FF5A36')
+    setSelectedWarna(CIRCLE_COLORS[0].hex)
     setModalError('')
     setIsCreateModalOpen(true)
   }
@@ -168,12 +122,12 @@ export default function CirclesPage() {
     setEditingCircle(circle)
     setCircleNama(circle.nama)
     setSelectedIkon(circle.ikon || 'users')
-    setSelectedWarna(circle.warna_hex || '#FF5A36')
+    setSelectedWarna(circle.warna_hex || CIRCLE_COLORS[0].hex)
     setModalError('')
     setIsCreateModalOpen(true)
   }
 
-  // Handle Save (Create or Update Circle)
+  // Handle Save (Create or Update)
   const handleSaveCircle = async (e) => {
     e.preventDefault()
     if (!circleNama.trim()) {
@@ -184,82 +138,70 @@ export default function CirclesPage() {
     setModalLoading(true)
     setModalError('')
 
+    const colorObj = getCircleColorByHexOrName(selectedWarna)
+
     try {
       if (editingCircle) {
-        // Update circle
         const { error } = await supabase
           .from('circles')
           .update({
             nama: circleNama.trim(),
+            warna_hex: colorObj.hex,
             ikon: selectedIkon,
-            warna_hex: selectedWarna,
           })
           .eq('id', editingCircle.id)
 
-        if (error) {
-          // Local optimistic update
-          setCircles((prev) =>
-            prev.map((c) =>
-              c.id === editingCircle.id
-                ? { ...c, nama: circleNama.trim(), ikon: selectedIkon, warna_hex: selectedWarna }
-                : c
-            )
+        if (error) throw error
+
+        setCircles((prev) =>
+          prev.map((c) =>
+            c.id === editingCircle.id
+              ? {
+                  ...c,
+                  nama: circleNama.trim(),
+                  warna_hex: colorObj.hex,
+                  ikon: selectedIkon,
+                }
+              : c
           )
-        } else {
-          await loadCircles()
-        }
+        )
       } else {
-        // Buat circle baru
+        const newCirclePayload = {
+          owner_id: user?.id,
+          nama: circleNama.trim(),
+          warna_hex: colorObj.hex,
+          ikon: selectedIkon,
+        }
+
         const { data, error } = await supabase
           .from('circles')
-          .insert({
-            owner_id: user.id,
-            nama: circleNama.trim(),
-            ikon: selectedIkon,
-            warna_hex: selectedWarna,
-          })
+          .insert(newCirclePayload)
           .select()
           .single()
 
-        if (error || !data) {
-          // Local fallback
-          const newCircle = {
-            id: 'circle-' + Date.now(),
-            owner_id: user?.id,
-            nama: circleNama.trim(),
-            ikon: selectedIkon,
-            warna_hex: selectedWarna,
-            memberCount: 1,
-            isDefault: false,
-          }
-          setCircles((prev) => [...prev, newCircle])
-        } else {
-          // Tambahkan diri sendiri sebagai anggota
-          await supabase.from('circle_members').insert({
-            circle_id: data.id,
-            user_id: user.id,
-          })
-          await loadCircles()
+        if (error) throw error
+
+        if (data) {
+          setCircles((prev) => [
+            ...prev,
+            { ...data, memberCount: 1, circle_members: [] },
+          ])
         }
       }
 
       setIsCreateModalOpen(false)
     } catch (err) {
-      setModalError('Gagal menyimpan circle.')
+      console.error(err)
+      setModalError('Yah, gagal. Coba lagi sebentar.')
     } finally {
       setModalLoading(false)
     }
   }
 
-  // Hapus Circle (Circle Terdekat TIDAK BISA DIHAPUS)
+  // Handle Delete Circle
   const handleDeleteCircle = async (circle, e) => {
     if (e) e.stopPropagation()
-    if (circle.nama.toLowerCase() === 'terdekat') {
-      alert('Circle "Terdekat" adalah circle bawaan utama dan tidak dapat dihapus.')
-      return
-    }
-
-    if (!window.confirm(`Yakin ingin menghapus circle "${circle.nama}"? Postingan yang hanya dibagikan ke circle ini tidak akan lagi terlihat oleh anggota.`)) {
+    if (!window.confirm(`Hapus circle "${circle.nama}"? Anggota dan postingan di circle ini akan disesuaikan.`)) {
       return
     }
 
@@ -274,17 +216,19 @@ export default function CirclesPage() {
     }
   }
 
-  // Buka Detail Circle (/circle/:id)
+  // Open Detail / Manage Members Modal
   const handleOpenDetail = async (circle) => {
     setActiveCircleDetail(circle)
     setIsDetailLoading(true)
 
     try {
-      // 1. Ambil anggota circle
+      // 1. Ambil list anggota
       const { data: membersData, error: memErr } = await supabase
         .from('circle_members')
         .select(`
           id,
+          circle_id,
+          user_id,
           joined_at,
           user:users (
             id,
@@ -296,32 +240,12 @@ export default function CirclesPage() {
         .eq('circle_id', circle.id)
 
       if (memErr || !membersData) {
-        // Fallback mock members
-        setCircleMembers([
-          {
-            id: 'm-1',
-            user: {
-              id: user?.id,
-              nama: user?.user_metadata?.nama || 'Saya (Pemilik)',
-              username: user?.user_metadata?.username || 'me',
-              foto_url: null,
-            },
-          },
-          {
-            id: 'm-2',
-            user: {
-              id: 'u-2',
-              nama: 'Alya Rahmawati',
-              username: 'alyarahma',
-              foto_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-            },
-          },
-        ])
+        setCircleMembers([])
       } else {
         setCircleMembers(membersData.map((m) => ({ id: m.id, user: m.user })))
       }
 
-      // 2. Ambil teman yang statusnya accepted untuk opsi "Tambah Anggota"
+      // 2. Ambil teman yang statusnya accepted
       if (user?.id) {
         const { data: friendData } = await supabase
           .from('friendships')
@@ -341,10 +265,7 @@ export default function CirclesPage() {
           )
           setAcceptedFriends(friendsList)
         } else {
-          setAcceptedFriends([
-            { id: 'u-dimas', nama: 'Dimas Kurnia', username: 'dimaskurnia' },
-            { id: 'u-rizky', nama: 'Rizky Pratama', username: 'rizkypratama' },
-          ])
+          setAcceptedFriends([])
         }
       }
     } catch (err) {
@@ -354,49 +275,61 @@ export default function CirclesPage() {
     }
   }
 
-  // Tambah Anggota ke Circle
-  const handleAddMember = async () => {
-    if (!selectedFriendToAdd || !activeCircleDetail?.id) return
+  // Add Member to Circle
+  const handleAddMember = async (friendUser) => {
+    if (!activeCircleDetail || !friendUser) return
 
     try {
+      const payload = {
+        circle_id: activeCircleDetail.id,
+        user_id: friendUser.id,
+      }
+
       const { data, error } = await supabase
         .from('circle_members')
-        .insert({
-          circle_id: activeCircleDetail.id,
-          user_id: selectedFriendToAdd,
-        })
+        .insert(payload)
         .select()
         .single()
 
-      const friendObj = acceptedFriends.find((f) => f.id === selectedFriendToAdd)
-      if (friendObj) {
-        setCircleMembers((prev) => [
-          ...prev,
-          { id: data?.id || 'temp-' + Date.now(), user: friendObj },
-        ])
+      if (!error) {
+        const newMember = {
+          id: data?.id || `mem-${Date.now()}`,
+          user: friendUser,
+        }
+        setCircleMembers((prev) => [...prev, newMember])
+        setCircles((prev) =>
+          prev.map((c) =>
+            c.id === activeCircleDetail.id
+              ? { ...c, memberCount: (c.memberCount || 1) + 1 }
+              : c
+          )
+        )
       }
-      setSelectedFriendToAdd('')
-      loadCircles()
     } catch (err) {
       console.error(err)
     }
   }
 
-  // Keluarkan Anggota dari Circle (Hanya Owner)
-  const handleRemoveMember = async (memberUserId, memberRecordId) => {
-    if (memberUserId === user?.id) {
-      alert('Anda tidak bisa mengeluarkan diri Anda sendiri dari circle milik Anda.')
-      return
-    }
-
+  // Remove Member from Circle
+  const handleRemoveMember = async (memberRecordId, targetUserId) => {
+    if (!activeCircleDetail) return
     if (!window.confirm('Keluarkan anggota ini dari circle?')) return
 
     try {
-      if (memberRecordId && !memberRecordId.startsWith('temp-')) {
-        await supabase.from('circle_members').delete().eq('id', memberRecordId)
-      }
-      setCircleMembers((prev) => prev.filter((m) => m.user?.id !== memberUserId))
-      loadCircles()
+      await supabase
+        .from('circle_members')
+        .delete()
+        .eq('circle_id', activeCircleDetail.id)
+        .eq('user_id', targetUserId)
+
+      setCircleMembers((prev) => prev.filter((m) => m.id !== memberRecordId && m.user?.id !== targetUserId))
+      setCircles((prev) =>
+        prev.map((c) =>
+          c.id === activeCircleDetail.id
+            ? { ...c, memberCount: Math.max(1, (c.memberCount || 2) - 1) }
+            : c
+        )
+      )
     } catch (err) {
       console.error(err)
     }
@@ -404,28 +337,27 @@ export default function CirclesPage() {
 
   const getPresetIconComponent = (iconId) => {
     const found = ICON_PRESETS.find((p) => p.id === iconId)
-    return found ? found.icon : Users
+    return found ? found.icon : UsersThree
   }
 
   return (
-    <div className="p-4 space-y-4 pb-24">
-      {/* Header */}
+    <div className="p-4 space-y-5 pb-24">
+      {/* Header Halaman */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-[20px] font-bold text-main tracking-tight leading-tight">
-            Lingkaran Privat
-          </h2>
-          <p className="text-[12px] text-muted">
-            Atur siapa saja yang dapat membaca postinganmu
+          <h1 className="font-serif text-xl font-bold text-main tracking-tight">
+            Circle Teman
+          </h1>
+          <p className="font-sans text-xs text-muted mt-0.5">
+            Lingkaran cerita yang terisolasi dan privat
           </p>
         </div>
 
         <Button
-          variant="gradient"
+          variant="primary"
           size="sm"
           onClick={openCreateModal}
-          leftIcon={<Plus className="w-4 h-4" />}
-          className="shadow-sm font-semibold"
+          leftIcon={<Plus size={16} weight="bold" />}
         >
           Buat Circle
         </Button>
@@ -433,9 +365,8 @@ export default function CirclesPage() {
 
       {/* Loading state */}
       {isLoading && (
-        <div className="flex items-center justify-center gap-2 py-12 text-xs text-muted">
-          <Loader2 className="w-5 h-5 animate-spin text-[#3ED9E8]" />
-          <span>Memuat lingkaran circle...</span>
+        <div className="py-12 text-center text-xs text-muted font-sans">
+          Memuat circle teman...
         </div>
       )}
 
@@ -445,40 +376,44 @@ export default function CirclesPage() {
           {circles.map((circle) => {
             const IconComponent = getPresetIconComponent(circle.ikon)
             const isOwner = circle.owner_id === user?.id
-            const isDefault = circle.isDefault || circle.nama.toLowerCase() === 'terdekat'
+            const isDefault = circle.nama.toLowerCase() === 'terdekat'
+            const circleColorObj = getCircleColorByHexOrName(circle.warna_hex)
 
             return (
               <Card
                 key={circle.id}
                 variant="default"
                 onClick={() => handleOpenDetail(circle)}
-                className="p-4 cursor-pointer hover:border-[#3B8FE8]/40 transition-all duration-200 shadow-soft"
+                className="p-4 cursor-pointer hover:border-accent/40 transition-colors"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    {/* Circle Color Badge Icon (SOLID & KONTRAS TINGGI) */}
+                    {/* Circle Color Badge Icon (SOLID warna bernama) */}
                     <div
-                      className="w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-sm shrink-0"
-                      style={{ backgroundColor: circle.warna_hex || '#FF5A36' }}
+                      className="w-11 h-11 rounded-[14px] flex items-center justify-center shadow-sm shrink-0"
+                      style={{
+                        backgroundColor: circleColorObj.hex,
+                        color: circleColorObj.text,
+                      }}
                     >
-                      <IconComponent className="w-5 h-5 stroke-[2.4]" />
+                      <IconComponent size={22} weight="bold" />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-[15px] font-bold text-main truncate">
+                        <h3 className="font-serif text-base font-bold text-main truncate">
                           {circle.nama}
                         </h3>
                         {isDefault && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF5A36]/15 text-[#FF5A36] border border-[#FF5A36]/30 shrink-0">
+                          <span className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shrink-0">
                             Utama
                           </span>
                         )}
                       </div>
 
-                      <p className="text-[11px] text-muted flex items-center gap-1 mt-0.5">
-                        <Users className="w-3 h-3 text-[#3ED9E8]" />
-                        <span>{circle.memberCount} anggota aktif</span>
+                      <p className="font-sans text-xs text-muted flex items-center gap-1.5 mt-0.5">
+                        <UsersThree size={14} weight="bold" />
+                        <span>{circle.memberCount} anggota • circle {circleColorObj.name}</span>
                       </p>
                     </div>
                   </div>
@@ -488,29 +423,29 @@ export default function CirclesPage() {
                     <button
                       onClick={(e) => openEditModal(circle, e)}
                       aria-label="Edit Circle"
-                      className="p-2 rounded-full hover:bg-surface-elevated text-muted hover:text-main transition-colors"
+                      className="p-2 rounded-full hover:bg-surface-2 text-muted hover:text-main transition-colors"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Pencil size={16} weight="bold" />
                     </button>
 
-                    {!isDefault && (
+                    {!isDefault && isOwner && (
                       <button
                         onClick={(e) => handleDeleteCircle(circle, e)}
                         aria-label="Hapus Circle"
-                        className="p-2 rounded-full hover:bg-surface-elevated text-muted hover:text-[#FF5A36] transition-colors"
+                        className="p-2 rounded-full hover:bg-surface-2 text-muted hover:text-[#E8452C] transition-colors"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash size={16} weight="bold" />
                       </button>
                     )}
                   </div>
                 </div>
 
                 {/* Bottom Card Footer */}
-                <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/60 text-[11px]">
+                <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/60 text-xs">
                   <span className="text-muted flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-[#8CC63F]" /> Terisolasi via Post Circles RLS
+                    <Lock size={12} weight="bold" /> Terisolasi privat
                   </span>
-                  <span className="text-[#3ED9E8] font-semibold hover:underline">
+                  <span className="text-accent font-semibold hover:underline">
                     Kelola Anggota →
                   </span>
                 </div>
@@ -520,56 +455,107 @@ export default function CirclesPage() {
         </div>
       )}
 
+      {/* Empty State */}
+      {!isLoading && circles.length === 0 && (
+        <div className="py-12 text-center space-y-3">
+          <div className="flex justify-center">
+            <EmptyFriendsSketch className="w-24 h-24" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="font-serif text-base font-bold text-main">Belum punya circle teman</h4>
+            <p className="font-sans text-xs text-muted max-w-xs mx-auto">
+              Buat circle pertamamu seperti 'Keluarga' atau 'Sahabat Dekat' untuk berbagi cerita.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Button variant="primary" size="sm" onClick={openCreateModal}>
+              Buat Circle Sekarang
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Modal Buat / Edit Circle */}
       <AnimatePresence>
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75">
             <motion.div
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
-              transition={{ duration: 0.25 }}
-              className="w-full max-w-md bg-surface border border-border rounded-t-3xl sm:rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md bg-surface border border-border rounded-t-[22px] sm:rounded-[22px] p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-border/80">
-                <h3 className="text-[18px] font-bold text-main">
+              <div className="flex items-center justify-between pb-2 border-b border-border">
+                <h3 className="font-serif text-lg font-bold text-main">
                   {editingCircle ? 'Edit Circle' : 'Buat Circle Baru'}
                 </h3>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1.5 rounded-full hover:bg-surface-subtle text-muted hover:text-main"
+                  className="p-1 rounded-full text-muted hover:text-main"
                 >
-                  <X className="w-5 h-5" />
+                  <X size={18} weight="bold" />
                 </button>
               </div>
 
               {modalError && (
-                <div className="p-3 rounded-xl bg-[#FF5A36]/15 border border-[#FF5A36]/30 text-xs text-[#FF5A36] flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3 bg-[#E8452C]/10 text-[#E8452C] rounded-[12px] flex items-center gap-2 text-xs">
+                  <WarningCircle size={16} weight="bold" className="shrink-0" />
                   <span>{modalError}</span>
                 </div>
               )}
 
               <form onSubmit={handleSaveCircle} className="space-y-4">
-                {/* Field Nama */}
+                {/* Nama Circle */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
+                  <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
                     Nama Circle
                   </label>
                   <input
                     type="text"
                     value={circleNama}
                     onChange={(e) => setCircleNama(e.target.value)}
-                    placeholder="Contoh: Sahabat Kuliah, Keluarga Besar"
-                    required
-                    className="w-full bg-surface-subtle text-main text-body px-3.5 py-2.5 rounded-xl border border-border focus:outline-none focus:border-[#3B8FE8]"
+                    placeholder="misal: Sahabat Dekat, Keluarga, Teman Kantor"
+                    className="w-full bg-surface-2 text-main font-sans text-sm p-3.5 rounded-[14px] border border-border focus:outline-none focus:border-accent"
                   />
                 </div>
 
-                {/* Preset Ikon */}
+                {/* Pilih Warna Identitas (6 Warna Solid Bernama) */}
                 <div className="space-y-2">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
-                    Pilih Ikon Preset
+                  <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
+                    Warna Identitas
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CIRCLE_COLORS.map((c) => {
+                      const isSelected = selectedWarna.toLowerCase() === c.hex.toLowerCase()
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSelectedWarna(c.hex)}
+                          className={`flex items-center gap-2 p-2 rounded-[12px] border text-xs font-semibold transition-all ${
+                            isSelected
+                              ? 'border-accent shadow-sm'
+                              : 'border-border hover:bg-surface-2'
+                          }`}
+                        >
+                          <span
+                            className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center"
+                            style={{ backgroundColor: c.hex }}
+                          >
+                            {isSelected && <Check size={10} weight="bold" style={{ color: c.text }} />}
+                          </span>
+                          <span className="font-serif truncate">{c.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Pilih Ikon */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
+                    Ikon Circle
                   </label>
                   <div className="grid grid-cols-4 gap-2">
                     {ICON_PRESETS.map((item) => {
@@ -580,83 +566,29 @@ export default function CirclesPage() {
                           key={item.id}
                           type="button"
                           onClick={() => setSelectedIkon(item.id)}
-                          className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                          className={`flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-[12px] border transition-all ${
                             isSelected
-                              ? 'border-[#3ED9E8] bg-[#3ED9E8]/15 text-[#3ED9E8] font-bold scale-105'
-                              : 'border-border bg-surface-subtle text-muted hover:text-main'
+                              ? 'bg-accent/15 border-accent text-accent'
+                              : 'bg-surface-2 border-border text-muted hover:text-main'
                           }`}
                         >
-                          <IconComp className="w-5 h-5" />
-                          <span className="text-[10px] truncate max-w-full">{item.label}</span>
+                          <IconComp size={20} weight={isSelected ? 'fill' : 'regular'} />
+                          <span className="text-[10px] font-sans">{item.label}</span>
                         </button>
                       )
                     })}
                   </div>
                 </div>
 
-                {/* Preset Warna Identitas (WAJIB SOLID & KONTRAS TINGGI) */}
-                <div className="space-y-2">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
-                    Pilih Warna Identitas
-                  </label>
-                  <div className="flex items-center justify-between gap-2">
-                    {COLOR_PRESETS.map((color) => {
-                      const isSelected = selectedWarna === color.hex
-                      return (
-                        <button
-                          key={color.id}
-                          type="button"
-                          onClick={() => setSelectedWarna(color.hex)}
-                          aria-label={color.name}
-                          className="w-9 h-9 rounded-full flex items-center justify-center transition-transform shadow-sm hover:scale-110 active:scale-95"
-                          style={{
-                            backgroundColor: color.hex,
-                            outline: isSelected ? '3px solid white' : 'none',
-                            outlineOffset: '2px',
-                          }}
-                        >
-                          {isSelected && <Check className="w-4 h-4 text-white stroke-[3]" />}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Live Preview Chip (Sesuai Spesifikasi) */}
-                <div className="p-3 bg-surface-subtle border border-border rounded-xl space-y-1.5">
-                  <span className="text-[10px] font-semibold text-muted uppercase tracking-wider block">
-                    Preview Live Chip
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Chip
-                      colorHex={selectedWarna}
-                      variant="solid"
-                      icon={React.createElement(getPresetIconComponent(selectedIkon), {
-                        className: 'w-3.5 h-3.5',
-                      })}
-                    >
-                      {circleNama || 'Nama Circle'}
-                    </Chip>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="pt-2 flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setIsCreateModalOpen(false)}
-                    className="flex-1"
-                  >
-                    Batal
-                  </Button>
+                {/* Submit button */}
+                <div className="pt-2">
                   <Button
                     type="submit"
-                    variant="gradient"
+                    variant="primary"
+                    fullWidth
                     isLoading={modalLoading}
-                    className="flex-1"
                   >
-                    {editingCircle ? 'Simpan' : 'Buat Sekarang'}
+                    {editingCircle ? 'Simpan Perubahan' : 'Buat Circle'}
                   </Button>
                 </div>
               </form>
@@ -665,145 +597,156 @@ export default function CirclesPage() {
         )}
       </AnimatePresence>
 
-      {/* Modal Detail Circle (/circle/:id) */}
+      {/* Modal Kelola Anggota Circle */}
       <AnimatePresence>
         {activeCircleDetail && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75">
             <motion.div
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
-              transition={{ duration: 0.25 }}
-              className="w-full max-w-lg bg-surface border border-border rounded-t-3xl sm:rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md bg-surface border border-border rounded-t-[22px] sm:rounded-[22px] p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl"
             >
-              {/* Header Warna Circle */}
-              <div
-                className="p-4 rounded-2xl text-white flex items-center justify-between shadow-md"
-                style={{ backgroundColor: activeCircleDetail.warna_hex || '#FF5A36' }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-black/20 text-white">
-                    {React.createElement(getPresetIconComponent(activeCircleDetail.ikon), {
-                      className: 'w-6 h-6 stroke-[2.4]',
-                    })}
-                  </div>
-                  <div>
-                    <h3 className="text-[18px] font-bold leading-tight">
-                      {activeCircleDetail.nama}
-                    </h3>
-                    <p className="text-[12px] opacity-90">
-                      {circleMembers.length} anggota tergabung
-                    </p>
-                  </div>
+              {/* Header Detail */}
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="w-3.5 h-3.5 rounded-full"
+                    style={{ backgroundColor: activeCircleDetail.warna_hex || '#FF6A3D' }}
+                  />
+                  <h3 className="font-serif text-lg font-bold text-main">
+                    {activeCircleDetail.nama}
+                  </h3>
                 </div>
-
                 <button
                   onClick={() => setActiveCircleDetail(null)}
-                  className="p-1.5 rounded-full bg-black/20 hover:bg-black/30 text-white"
+                  className="p-1 rounded-full text-muted hover:text-main"
                 >
-                  <X className="w-5 h-5" />
+                  <X size={18} weight="bold" />
                 </button>
               </div>
 
-              {/* Tambah Anggota dari Teman Accepted */}
-              <div className="p-3.5 bg-surface-subtle border border-border rounded-2xl space-y-2">
-                <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
-                  Tambah Anggota (Dari Teman Terhubung)
+              {/* Tambah Anggota dari Teman yang Accepted */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
+                  Tambah Teman ke Circle Ini
                 </label>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selectedFriendToAdd}
-                    onChange={(e) => setSelectedFriendToAdd(e.target.value)}
-                    className="flex-1 bg-surface text-main text-xs px-3 py-2 rounded-xl border border-border focus:outline-none focus:border-[#3B8FE8]"
-                  >
-                    <option value="">Pilih teman untuk dimasukkan...</option>
-                    {acceptedFriends
-                      .filter((f) => !circleMembers.some((m) => m.user?.id === f.id))
-                      .map((friend) => (
-                        <option key={friend.id} value={friend.id}>
-                          {friend.nama} (@{friend.username})
-                        </option>
-                      ))}
-                  </select>
 
-                  <Button
-                    variant="gradient"
-                    size="sm"
-                    disabled={!selectedFriendToAdd}
-                    onClick={handleAddMember}
-                    leftIcon={<UserPlus className="w-3.5 h-3.5" />}
-                  >
-                    Tambah
-                  </Button>
-                </div>
+                {acceptedFriends.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedFriendToAdd}
+                      onChange={(e) => setSelectedFriendToAdd(e.target.value)}
+                      className="flex-1 bg-surface-2 text-main font-sans text-xs p-2.5 rounded-[12px] border border-border focus:outline-none"
+                    >
+                      <option value="">Pilih teman terhubung...</option>
+                      {acceptedFriends
+                        .filter(
+                          (fr) =>
+                            fr &&
+                            fr.id !== user?.id &&
+                            !circleMembers.some((m) => m.user?.id === fr.id)
+                        )
+                        .map((fr) => (
+                          <option key={fr.id} value={fr.id}>
+                            {fr.nama} (@{fr.username})
+                          </option>
+                        ))}
+                    </select>
+
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={!selectedFriendToAdd}
+                      onClick={() => {
+                        const target = acceptedFriends.find(
+                          (f) => f.id === selectedFriendToAdd
+                        )
+                        if (target) {
+                          handleAddMember(target)
+                          setSelectedFriendToAdd('')
+                        }
+                      }}
+                      leftIcon={<UserPlus size={14} weight="bold" />}
+                    >
+                      Tambah
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted">
+                    Belum ada teman terhubung. Cari dan tambah teman terlebih dahulu.
+                  </p>
+                )}
               </div>
 
               {/* Daftar Anggota Circle */}
-              <div className="space-y-2">
-                <h4 className="text-[12px] font-bold text-main uppercase tracking-wider">
-                  Daftar Anggota Circle
-                </h4>
+              <div className="space-y-2.5 pt-2">
+                <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-muted block">
+                  Daftar Anggota ({circleMembers.length + 1})
+                </span>
 
-                {isDetailLoading ? (
-                  <div className="py-6 flex items-center justify-center gap-2 text-xs text-muted">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#3ED9E8]" />
-                    <span>Memuat anggota...</span>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {/* Pemilik (Owner) */}
+                  <div className="flex items-center justify-between p-2.5 rounded-[12px] bg-surface-2">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar
+                        src={user?.user_metadata?.avatar_url}
+                        name={user?.user_metadata?.nama || 'Saya'}
+                        size="sm"
+                      />
+                      <div>
+                        <h4 className="font-sans text-xs font-bold text-main">
+                          {user?.user_metadata?.nama || 'Saya (Pemilik)'}
+                        </h4>
+                        <span className="text-[10px] text-muted font-sans">Pemilik Circle</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent/15 text-accent">
+                      Owner
+                    </span>
                   </div>
-                ) : (
-                  <div className="space-y-2 max-h-56 overflow-y-auto">
-                    {circleMembers.map((member) => {
-                      const memberUser = member.user || {
-                        nama: 'Pengguna Hay!',
-                        username: 'user',
-                      }
-                      const isCurrentUser = memberUser.id === user?.id
-                      const isOwner = memberUser.id === activeCircleDetail.owner_id
 
-                      return (
-                        <div
-                          key={member.id}
-                          className="p-2.5 rounded-xl bg-surface-subtle border border-border flex items-center justify-between gap-3"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <Avatar
-                              src={memberUser.foto_url}
-                              name={memberUser.nama}
-                              size="sm"
-                              circleRing="coral"
-                              hasRing={true}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[13px] font-bold text-main truncate">
-                                  {memberUser.nama}
-                                </span>
-                                {isOwner && (
-                                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#3ED9E8]/20 text-[#3ED9E8]">
-                                    Owner
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[11px] text-muted truncate block">
-                                @{memberUser.username}
-                              </span>
-                            </div>
+                  {/* Anggota Lain */}
+                  {circleMembers.map((member) => {
+                    const memberUser = member.user || {
+                      nama: 'Teman',
+                      username: 'friend',
+                    }
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-2.5 rounded-[12px] bg-surface-2"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Avatar
+                            src={memberUser.foto_url}
+                            name={memberUser.nama}
+                            size="sm"
+                          />
+                          <div>
+                            <h4 className="font-sans text-xs font-bold text-main">
+                              {memberUser.nama}
+                            </h4>
+                            <span className="text-[10px] text-muted">
+                              @{memberUser.username}
+                            </span>
                           </div>
-
-                          {/* Action: Keluarkan Anggota (Hanya Owner) */}
-                          {user?.id === activeCircleDetail.owner_id && !isCurrentUser && (
-                            <button
-                              onClick={() => handleRemoveMember(memberUser.id, member.id)}
-                              aria-label="Keluarkan Anggota"
-                              className="text-[11px] text-[#FF5A36] hover:underline font-semibold px-2 py-1"
-                            >
-                              Keluarkan
-                            </button>
-                          )}
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
+
+                        <button
+                          onClick={() =>
+                            handleRemoveMember(member.id, memberUser.id)
+                          }
+                          aria-label="Keluarkan"
+                          className="p-1.5 rounded-full text-muted hover:text-[#E8452C] hover:bg-surface"
+                        >
+                          <UserMinus size={16} weight="bold" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </motion.div>
           </div>

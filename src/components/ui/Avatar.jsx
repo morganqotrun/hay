@@ -1,25 +1,18 @@
 import React from 'react'
+import { getCircleColorByHexOrName } from '../../constants/circleColors'
 
 /**
- * Avatar with Circle Ring options and fallback initials
- * @param {Object} props
- * @param {string} [props.src]
- * @param {string} [props.alt]
- * @param {string} [props.name]
- * @param {'xs' | 'sm' | 'md' | 'lg' | 'xl'} [props.size='md']
- * @param {'coral' | 'magenta' | 'mustard' | 'lime' | 'biru' | 'ungu' | 'none' | string} [props.circleRing='none']
- * @param {boolean} [props.hasRing=false]
- * @param {string} [props.moodBadge]
- * @param {string} [props.className]
+ * Human-Crafted Avatar with Story Ring
+ * - Solid circle color ring with 3px gap (outline-offset: 3px), NOT gradient
+ * - Dashed ring for stories already viewed
  */
 export default function Avatar({
   src,
   alt = 'Avatar',
   name = '',
   size = 'md',
-  circleRing = 'none',
-  hasRing = false,
-  moodBadge,
+  circleColor,
+  isSeen = false,
   className = '',
 }) {
   const sizeMap = {
@@ -30,28 +23,21 @@ export default function Avatar({
     xl: 'w-20 h-20 text-xl font-bold',
   }
 
-  const ringColors = {
-    coral: 'ring-2 ring-[#FF5A36] ring-offset-2 ring-offset-app',
-    magenta: 'ring-2 ring-[#E8467C] ring-offset-2 ring-offset-app',
-    mustard: 'ring-2 ring-[#FFB627] ring-offset-2 ring-offset-app',
-    lime: 'ring-2 ring-[#8CC63F] ring-offset-2 ring-offset-app',
-    biru: 'ring-2 ring-[#3B8FE8] ring-offset-2 ring-offset-app',
-    ungu: 'ring-2 ring-[#9B6DE8] ring-offset-2 ring-offset-app',
+  // Resolve ring style
+  let ringStyle = {}
+  if (circleColor) {
+    const resolvedColor = getCircleColorByHexOrName(circleColor).hex
+    ringStyle = {
+      outline: `2.5px ${isSeen ? 'dashed' : 'solid'} ${resolvedColor}`,
+      outlineOffset: '3px',
+    }
   }
-
-  const isHex = typeof circleRing === 'string' && circleRing.startsWith('#')
-  const activeRingClass = !isHex && (circleRing !== 'none' || hasRing)
-    ? ringColors[circleRing] || 'ring-2 ring-[#FF5A36] ring-offset-2 ring-offset-app'
-    : ''
-
-  const hexRingStyle = isHex
-    ? { outline: `2.5px solid ${circleRing}`, outlineOffset: '2px' }
-    : {}
 
   // Fallback initials
   const initials = name
     ? name
-        .split(' ')
+        .trim()
+        .split(/\s+/)
         .map((n) => n[0])
         .slice(0, 2)
         .join('')
@@ -61,8 +47,8 @@ export default function Avatar({
   return (
     <div className={`relative inline-flex shrink-0 ${className}`}>
       <div
-        style={hexRingStyle}
-        className={`relative rounded-full overflow-hidden flex items-center justify-center font-bold select-none border border-border/40 shadow-soft-sm ${sizeMap[size]} ${activeRingClass} bg-surface-subtle text-main`}
+        style={ringStyle}
+        className={`relative rounded-full overflow-hidden flex items-center justify-center font-sans font-semibold select-none border border-border/40 ${sizeMap[size]} bg-surface-2 text-main`}
       >
         {src ? (
           <img
@@ -70,20 +56,15 @@ export default function Avatar({
             alt={alt}
             className="w-full h-full object-cover"
             onError={(e) => {
-              // Jika gambar error, ganti ke fallback
               e.currentTarget.style.display = 'none'
             }}
           />
         ) : (
-          <span className="text-muted font-semibold tracking-wider">{initials}</span>
+          <span className="text-muted tracking-wider text-[11px] font-bold">
+            {initials}
+          </span>
         )}
       </div>
-
-      {moodBadge && (
-        <span className="absolute -bottom-1 -right-1 bg-surface border border-border shadow-soft-sm rounded-full p-0.5 text-xs flex items-center justify-center">
-          {moodBadge}
-        </span>
-      )}
     </div>
   )
 }

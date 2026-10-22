@@ -2,25 +2,25 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   User,
-  AtSign,
-  Mail,
+  At,
+  EnvelopeSimple,
   Phone,
   Lock,
   Eye,
-  EyeOff,
+  EyeSlash,
   Check,
   X,
-  Loader2,
-  AlertCircle,
+  WarningCircle,
   ArrowRight,
-  ShieldCheck,
-} from 'lucide-react'
+} from '@phosphor-icons/react'
 import Button from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { useContentContext } from '../context/ContentContext'
 
 export default function RegisterPage({ onNavigateLogin, onSuccess }) {
   const { signUp } = useAuth()
+  const { t, renderContent } = useContentContext()
 
   const [nama, setNama] = useState('')
   const [username, setUsername] = useState('')
@@ -30,7 +30,7 @@ export default function RegisterPage({ onNavigateLogin, onSuccess }) {
   const [showPassword, setShowPassword] = useState(false)
 
   // Realtime debounce username validation state
-  const [usernameStatus, setUsernameStatus] = useState('idle') // 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
+  const [usernameStatus, setUsernameStatus] = useState('idle')
   const [usernameFeedback, setUsernameFeedback] = useState('')
 
   const [isLoading, setIsLoading] = useState(false)
@@ -64,7 +64,6 @@ export default function RegisterPage({ onNavigateLogin, onSuccess }) {
           .maybeSingle()
 
         if (error) {
-          // Jika offline atau mock
           setUsernameStatus('available')
           setUsernameFeedback(`@${cleanUsername} dapat digunakan`)
           return
@@ -101,12 +100,12 @@ export default function RegisterPage({ onNavigateLogin, onSuccess }) {
     }
 
     if (usernameStatus === 'taken') {
-      setErrorMessage('Username tersebut sudah digunakan oleh pengguna lain.')
+      setErrorMessage('Username sudah dipakai orang lain. Pilih yang lain.')
       return
     }
 
-    if (!email.trim() || !password) {
-      setErrorMessage('Email dan kata sandi wajib diisi.')
+    if (!email || !password) {
+      setErrorMessage('Email dan password wajib diisi.')
       return
     }
 
@@ -120,135 +119,118 @@ export default function RegisterPage({ onNavigateLogin, onSuccess }) {
 
     try {
       const { data, error } = await signUp({
-        email: email.trim(),
+        email,
         password,
         nama: nama.trim(),
         username: cleanUsername,
-        phone: phone.trim(),
+        phone: phone.trim() || null,
       })
 
       if (error) {
-        setErrorMessage(error.message || 'Gagal mendaftar. Silakan coba lagi.')
+        setErrorMessage(error.message || 'Yah, gagal. Coba lagi sebentar.')
       } else {
         if (onSuccess) onSuccess(data?.user)
       }
     } catch (err) {
-      setErrorMessage('Terjadi kendala saat menghubungkan ke database.')
+      setErrorMessage('Yah, gagal. Coba lagi sebentar.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A12] text-white flex flex-col justify-between px-6 py-8 select-none">
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="space-y-6 max-w-md mx-auto w-full"
-      >
-        {/* Header Branding */}
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161726] border border-[#232339]">
-            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#3B8FE8] to-[#3ED9E8]" />
-            <span className="text-xs font-bold tracking-wider text-white uppercase font-sans">
-              Hay!
-            </span>
-          </div>
+    <div className="min-h-screen bg-[#15110E] text-[#F6EEE1] p-6 flex flex-col justify-between select-none">
+      <div className="space-y-6 max-w-sm mx-auto w-full pt-4">
+        {/* Header Wordmark */}
+        <div className="flex items-center justify-between">
+          <span className="font-serif text-2xl font-black text-[#F6EEE1]">
+            Hay!
+          </span>
+          <button
+            type="button"
+            onClick={onNavigateLogin}
+            className="font-sans text-xs text-[#A79A8A] hover:text-[#F6EEE1]"
+          >
+            Sudah punya akun? <span className="text-[#FF6A3D] font-bold">{t('register_btn_login', 'Masuk')}</span>
+          </button>
+        </div>
 
-          <h1 className="text-[26px] font-bold text-white leading-tight tracking-tight pt-1">
-            Buat Akun <span className="text-[#3ED9E8] italic font-semibold">Baru</span>
+        {/* Title */}
+        <div className="space-y-1">
+          <h1 className="font-serif text-2xl font-bold text-[#F6EEE1] leading-tight">
+            {renderContent('register_title', 'Buat akun **Hay!**')}
           </h1>
-          <p className="text-[14px] text-[#B8B8C4]">
-            Mulai bangun circle privat dan catat jurnal harianmu.
+          <p className="font-sans text-xs text-[#A79A8A]">
+            {t('register_desc', 'Mulai berbagi cerita dengan lingkaran terdekatmu.')}
           </p>
         </div>
 
-        {/* Error Alert */}
+        {/* Error notification */}
         {errorMessage && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-3.5 rounded-2xl bg-[#FF5A36]/15 border border-[#FF5A36]/40 flex items-start gap-2.5 text-xs text-[#FF5A36]"
-          >
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span className="leading-relaxed font-medium">{errorMessage}</span>
-          </motion.div>
+          <div className="p-3 bg-[#E8452C]/10 border border-[#E8452C]/30 text-[#E8452C] rounded-[12px] flex items-center gap-2 text-xs">
+            <WarningCircle size={16} weight="bold" className="shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
         )}
 
-        {/* Register Form */}
+        {/* Form Register */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
-          {/* Field Nama */}
+          {/* Nama Lengkap */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#B8B8C4] uppercase tracking-wider block">
+            <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-[#A79A8A] block">
               Nama Lengkap
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-[#B8B8C4]/60 pointer-events-none">
-                <User className="w-4 h-4" />
-              </span>
+              <User size={18} weight="bold" className="absolute left-3.5 text-[#A79A8A] pointer-events-none" />
               <input
                 type="text"
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
-                placeholder="Contoh: Farhan Syahputra"
+                placeholder="misal: Farhan Syahputra"
                 required
-                className="w-full bg-[#1A1A24] text-white text-[14px] pl-10 pr-4 py-3 rounded-2xl border border-[#232339] focus:outline-none focus:border-[#3B8FE8] focus:ring-1 focus:ring-[#3B8FE8] transition-all placeholder:text-[#B8B8C4]/40"
+                className="w-full bg-[#1F1915] text-[#F6EEE1] font-sans text-sm pl-10 pr-4 py-3 rounded-[14px] border border-[#3A2F27] focus:outline-none focus:border-[#FF6A3D] transition-colors placeholder:text-[#A79A8A]/50"
               />
             </div>
           </div>
 
-          {/* Field Username with Realtime Debounce 400ms Validation */}
+          {/* Username Unik */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#B8B8C4] uppercase tracking-wider block">
+            <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-[#A79A8A] block">
               Username Unik
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-[#B8B8C4]/60 pointer-events-none">
-                <AtSign className="w-4 h-4" />
-              </span>
+              <At size={18} weight="bold" className="absolute left-3.5 text-[#A79A8A] pointer-events-none" />
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="farhan_s"
                 required
-                className={`w-full bg-[#1A1A24] text-white text-[14px] pl-10 pr-11 py-3 rounded-2xl border transition-all placeholder:text-[#B8B8C4]/40 focus:outline-none ${
+                className={`w-full bg-[#1F1915] text-[#F6EEE1] font-sans text-sm pl-10 pr-10 py-3 rounded-[14px] border transition-colors placeholder:text-[#A79A8A]/50 focus:outline-none ${
                   usernameStatus === 'available'
-                    ? 'border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]'
+                    ? 'border-[#4FA05A]'
                     : usernameStatus === 'taken' || usernameStatus === 'invalid'
-                    ? 'border-[#FF5A36] focus:ring-1 focus:ring-[#FF5A36]'
-                    : 'border-[#232339] focus:border-[#3B8FE8] focus:ring-1 focus:ring-[#3B8FE8]'
+                    ? 'border-[#E8452C]'
+                    : 'border-[#3A2F27] focus:border-[#FF6A3D]'
                 }`}
               />
-
-              {/* Status Indicator Icon */}
               <div className="absolute right-3.5 flex items-center pointer-events-none">
-                {usernameStatus === 'checking' && (
-                  <Loader2 className="w-4 h-4 text-[#3ED9E8] animate-spin" />
-                )}
                 {usernameStatus === 'available' && (
-                  <span className="w-5 h-5 rounded-full bg-[#8CC63F] text-black flex items-center justify-center">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </span>
+                  <Check size={16} weight="bold" className="text-[#4FA05A]" />
                 )}
                 {(usernameStatus === 'taken' || usernameStatus === 'invalid') && (
-                  <span className="w-5 h-5 rounded-full bg-[#FF5A36] text-white flex items-center justify-center">
-                    <X className="w-3.5 h-3.5 stroke-[3]" />
-                  </span>
+                  <X size={16} weight="bold" className="text-[#E8452C]" />
                 )}
               </div>
             </div>
-
-            {/* Helper feedback text */}
             {usernameFeedback && (
               <p
-                className={`text-[11px] font-medium pl-1 ${
+                className={`text-[11px] font-sans pl-1 ${
                   usernameStatus === 'available'
-                    ? 'text-[#8CC63F]'
+                    ? 'text-[#4FA05A]'
                     : usernameStatus === 'taken' || usernameStatus === 'invalid'
-                    ? 'text-[#FF5A36]'
-                    : 'text-[#B8B8C4]'
+                    ? 'text-[#E8452C]'
+                    : 'text-[#A79A8A]'
                 }`}
               >
                 {usernameFeedback}
@@ -256,108 +238,86 @@ export default function RegisterPage({ onNavigateLogin, onSuccess }) {
             )}
           </div>
 
-          {/* Field Email */}
+          {/* Email */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#B8B8C4] uppercase tracking-wider block">
+            <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-[#A79A8A] block">
               Email
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-[#B8B8C4]/60 pointer-events-none">
-                <Mail className="w-4 h-4" />
-              </span>
+              <EnvelopeSimple size={18} weight="bold" className="absolute left-3.5 text-[#A79A8A] pointer-events-none" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@email.com"
                 required
-                autoComplete="email"
-                className="w-full bg-[#1A1A24] text-white text-[14px] pl-10 pr-4 py-3 rounded-2xl border border-[#232339] focus:outline-none focus:border-[#3B8FE8] focus:ring-1 focus:ring-[#3B8FE8] transition-all placeholder:text-[#B8B8C4]/40"
+                className="w-full bg-[#1F1915] text-[#F6EEE1] font-sans text-sm pl-10 pr-4 py-3 rounded-[14px] border border-[#3A2F27] focus:outline-none focus:border-[#FF6A3D] transition-colors placeholder:text-[#A79A8A]/50"
               />
             </div>
           </div>
 
-          {/* Field Nomor Telepon */}
+          {/* Nomor Telepon */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#B8B8C4] uppercase tracking-wider block">
+            <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-[#A79A8A] block">
               Nomor Telepon (Opsional)
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-[#B8B8C4]/60 pointer-events-none">
-                <Phone className="w-4 h-4" />
-              </span>
+              <Phone size={18} weight="bold" className="absolute left-3.5 text-[#A79A8A] pointer-events-none" />
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="08123456789"
-                className="w-full bg-[#1A1A24] text-white text-[14px] pl-10 pr-4 py-3 rounded-2xl border border-[#232339] focus:outline-none focus:border-[#3B8FE8] focus:ring-1 focus:ring-[#3B8FE8] transition-all placeholder:text-[#B8B8C4]/40"
+                placeholder="08xxxxxxxxxx"
+                className="w-full bg-[#1F1915] text-[#F6EEE1] font-sans text-sm pl-10 pr-4 py-3 rounded-[14px] border border-[#3A2F27] focus:outline-none focus:border-[#FF6A3D] transition-colors placeholder:text-[#A79A8A]/50"
               />
             </div>
           </div>
 
-          {/* Field Password */}
+          {/* Kata Sandi */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#B8B8C4] uppercase tracking-wider block">
+            <label className="text-[11px] font-sans font-bold uppercase tracking-wider text-[#A79A8A] block">
               Kata Sandi
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-[#B8B8C4]/60 pointer-events-none">
-                <Lock className="w-4 h-4" />
-              </span>
+              <Lock size={18} weight="bold" className="absolute left-3.5 text-[#A79A8A] pointer-events-none" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 6 karakter"
                 required
-                autoComplete="new-password"
-                className="w-full bg-[#1A1A24] text-white text-[14px] pl-10 pr-11 py-3 rounded-2xl border border-[#232339] focus:outline-none focus:border-[#3B8FE8] focus:ring-1 focus:ring-[#3B8FE8] transition-all placeholder:text-[#B8B8C4]/40"
+                className="w-full bg-[#1F1915] text-[#F6EEE1] font-sans text-sm pl-10 pr-10 py-3 rounded-[14px] border border-[#3A2F27] focus:outline-none focus:border-[#FF6A3D] transition-colors placeholder:text-[#A79A8A]/50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 text-[#B8B8C4]/60 hover:text-white"
+                className="absolute right-3.5 text-[#A79A8A] hover:text-[#F6EEE1]"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeSlash size={18} weight="bold" /> : <Eye size={18} weight="bold" />}
               </button>
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-3">
+          {/* Tombol Daftar */}
+          <div className="pt-2">
             <Button
               type="submit"
-              variant="gradient"
+              variant="primary"
               size="lg"
               fullWidth
               isLoading={isLoading}
-              rightIcon={<ArrowRight className="w-4 h-4 stroke-[2.4]" />}
-              className="shadow-[0_8px_20px_rgba(59,143,232,0.45)] font-bold text-base py-3"
+              disabled={usernameStatus === 'taken' || usernameStatus === 'invalid'}
             >
-              Daftar Akun
+              {t('register_btn_submit', 'Daftar')}
             </Button>
           </div>
         </form>
-      </motion.div>
+      </div>
 
-      {/* Footer */}
-      <div className="pt-8 text-center space-y-3 max-w-md mx-auto w-full">
-        <p className="text-[14px] text-[#B8B8C4]">
-          Sudah punya akun?{' '}
-          <button
-            type="button"
-            onClick={onNavigateLogin}
-            className="text-[#3ED9E8] font-bold hover:underline"
-          >
-            Masuk sekarang
-          </button>
+      <div className="pt-4 text-center">
+        <p className="font-sans text-[11px] text-[#A79A8A]">
+          Dengan mendaftar, kamu menyetujui ruang privat & aman Hay!
         </p>
-
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#B8B8C4]/60">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#8CC63F]" />
-          <span>Otomatis membuat Circle "Terdekat" & RLS terisolasi</span>
-        </div>
       </div>
     </div>
   )

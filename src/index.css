@@ -1,46 +1,47 @@
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/plus-jakarta-sans';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ==============================================================================
-   HAY! DESIGN SYSTEM — THEME VARIABLES (CERAH & MALAM)
+   HAY! DESIGN SYSTEM — HUMAN-CRAFTED WARM AESTHETIC
    ============================================================================== */
 
+/* TEMA CERAH ("KERTAS") */
 :root,
 .theme-cerah {
   color-scheme: light;
-  --color-bg: #FDF8F3;
-  --color-bg-gradient: linear-gradient(180deg, #FDF8F3 0%, #F9F2EA 100%);
-  --color-surface: #FFFFFF;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-subtle: #F6EFE7;
-  --color-text: #1F1D2B;
-  --color-text-muted: #7A7689;
-  --color-border: #EDE4DA;
-  --glass-bg: rgba(255, 255, 255, 0.88);
-  --nav-bg: rgba(255, 255, 255, 0.94);
-  --nav-border: #EDE4DA;
+  --color-bg: #F4EBDD;
+  --color-surface: #FBF6EC;
+  --color-surface-2: #EADFCC;
+  --color-border: #D9CBB3;
+  --color-text: #221A14;
+  --color-text-muted: #7B6C5C;
+  --color-accent: #D9490F;
+  --color-accent-text: #FFFFFF;
+  --color-accent-shadow: #A3360A;
+  --polaroid-bg: #FFFDF9;
+  --polaroid-border: #E8DCC8;
 }
 
+/* TEMA MALAM ("MALAM" — DEFAULT, HANGAT, BUKAN NAVY) */
 .theme-malam,
 .dark {
   color-scheme: dark;
-  --color-bg: #0A0A12;
-  --color-bg-gradient: linear-gradient(180deg, #0A0A12 0%, #0D0E1A 100%);
-  --color-surface: #161726;
-  --color-surface-elevated: #1D1E30;
-  --color-surface-subtle: #121320;
-  --color-text: #FFFFFF;
-  --color-text-muted: #B8B8C4;
-  --color-border: #232339;
-  --glass-bg: rgba(22, 23, 38, 0.88);
-  --nav-bg: rgba(22, 23, 38, 0.94);
-  --nav-border: #232339;
+  --color-bg: #15110E;
+  --color-surface: #1F1915;
+  --color-surface-2: #2A221C;
+  --color-border: #3A2F27;
+  --color-text: #F6EEE1;
+  --color-text-muted: #A79A8A;
+  --color-accent: #FF6A3D;
+  --color-accent-text: #15110E;
+  --color-accent-shadow: #B8431F;
+  --polaroid-bg: #261F1A;
+  --polaroid-border: #4A3C32;
 }
-
-/* ==============================================================================
-   BASE & SMOOTH 200MS THEME TRANSITION
-   ============================================================================== */
 
 @layer base {
   html {
@@ -48,65 +49,130 @@
   }
   
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     background-color: var(--color-bg);
     color: var(--color-text);
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-    /* 200ms smooth transition between themes */
-    transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
   }
 
-  /* Apply 200ms theme transition to surfaces & borders */
-  *,
-  *::before,
-  *::after {
-    transition-property: background-color, border-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
-  }
-
-  /* Exclude elements with explicit transform / opacity transitions to prevent conflicts */
-  .no-theme-transition,
-  [data-no-transition] {
-    transition: none !important;
+  h1, h2, h3, .font-fraunces {
+    font-family: 'Fraunces Variable', Fraunces, Georgia, serif;
+    font-optical-sizing: auto;
   }
 }
 
 /* ==============================================================================
-   CUSTOM MICRO-ANIMATION UTILITIES
+   GRAIN TEXTURE OVERLAY (SVG feTurbulence, 5% opacity, pointer-events: none)
    ============================================================================== */
-
-.animate-heart-bounce {
-  animation: heart-bounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-.animate-fade-slide-up {
-  animation: fade-slide-up 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ==============================================================================
+   BUTTONS (SOLID JINGGA, RADIUS 14PX, HARD OFFSET SHADOW 0 3px 0 #B8431F)
+   ============================================================================== */
+.btn-primary-jingga {
+  background-color: var(--color-accent);
+  color: var(--color-accent-text);
+  font-family: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 var(--color-accent-shadow);
+  transition: transform 100ms ease, box-shadow 100ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Stagger delays for list rendering */
-.stagger-1 { animation-delay: 60ms; }
-.stagger-2 { animation-delay: 120ms; }
-.stagger-3 { animation-delay: 180ms; }
-.stagger-4 { animation-delay: 240ms; }
-.stagger-5 { animation-delay: 300ms; }
+.btn-primary-jingga:hover {
+  filter: brightness(1.04);
+}
 
-/* Subtle custom scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+.btn-primary-jingga:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--color-accent-shadow);
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+
+/* ==============================================================================
+   WAVY UNDERLINE SVG UNTUK KATA DISOROT HEADLINE
+   ============================================================================== */
+.highlight-wavy {
+  position: relative;
+  display: inline-block;
+  font-style: italic;
+  font-family: 'Fraunces Variable', Fraunces, serif;
 }
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+
+.highlight-wavy::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 6px;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-size: 14px 6px;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='6' viewBox='0 0 14 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 3 Q 3.5 0 7 3 T 14 3' fill='none' stroke='%23FF6A3D' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* ==============================================================================
+   POLAROID / FOTO CETAK BINGKAI POST
+   ============================================================================== */
+.polaroid-frame {
+  background-color: var(--polaroid-bg);
+  border: 1px solid var(--polaroid-border);
+  border-radius: 6px;
+  padding: 6px 6px 14px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  transition: transform 150ms ease;
+}
+
+/* ==============================================================================
+   STICKER MOOD CHIP (-2deg sampai +2deg, outline tipis)
+   ============================================================================== */
+.mood-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
   border-radius: 9999px;
+  font-family: 'Fraunces Variable', Fraunces, serif;
+  font-style: italic;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+
+/* ==============================================================================
+   STEMPEL TITIK TIMELINE (LINGKARAN OUTLINE GANDA)
+   ============================================================================== */
+.timeline-stamp {
+  position: relative;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 3.5px currentColor;
+}
+
+/* ==============================================================================
+   PREFERS REDUCED MOTION SUPPORT
+   ============================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,25 +1,14 @@
 import React from 'react'
 
 /**
- * Reusable Button Component: Pill Rounded-Full
- * Variants:
- *  - gradient: #3B8FE8 ke #3ED9E8 (Brand/CTA utama)
- *  - outline: border tipis border, surface hover
- *  - ghost: tanpa border, transparent hover
- *
- * @param {Object} props
- * @param {'gradient' | 'outline' | 'ghost' | 'primary' | 'danger'} [props.variant='gradient']
- * @param {'sm' | 'md' | 'lg' | 'icon'} [props.size='md']
- * @param {boolean} [props.fullWidth=false]
- * @param {React.ReactNode} [props.leftIcon]
- * @param {React.ReactNode} [props.rightIcon]
- * @param {boolean} [props.isLoading=false]
- * @param {boolean} [props.disabled=false]
- * @param {string} [props.className]
- * @param {React.ReactNode} props.children
+ * Human-Crafted Button Component
+ * - Solid Jingga, dark text, radius 14px (NOT full pill)
+ * - Hard shadow 0 3px 0 #B8431F
+ * - Physical press: translates down 2px, shadow shrinks
+ * - No gradient
  */
 export default function Button({
-  variant = 'gradient',
+  variant = 'primary',
   size = 'md',
   fullWidth = false,
   leftIcon,
@@ -31,30 +20,29 @@ export default function Button({
   ...props
 }) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-full transition-all duration-150 select-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B8FE8] focus-visible:ring-offset-2 focus-visible:ring-offset-app active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100'
+    'inline-flex items-center justify-center font-sans font-semibold rounded-[14px] transition-all duration-100 select-none cursor-pointer focus:outline-none disabled:opacity-50 disabled:pointer-events-none'
 
   const sizeStyles = {
-    sm: 'text-xs px-3.5 py-1.5 gap-1.5 font-medium tracking-tight',
-    md: 'text-body px-5 py-2.5 gap-2 font-semibold',
-    lg: 'text-base px-6 py-3.5 gap-2.5 font-semibold shadow-soft',
-    icon: 'p-2.5 aspect-square rounded-full flex items-center justify-center',
+    sm: 'text-xs px-3.5 py-1.5 gap-1.5',
+    md: 'text-sm px-5 py-2.5 gap-2',
+    lg: 'text-base px-6 py-3.5 gap-2.5',
+    icon: 'p-2.5 aspect-square rounded-[14px] flex items-center justify-center',
   }
 
   const variantStyles = {
-    // Brand CTA Gradient (Biru-Cyan #3B8FE8 ke #3ED9E8)
-    gradient:
-      'bg-gradient-to-r from-[#3B8FE8] to-[#3ED9E8] text-white font-semibold shadow-md hover:brightness-105 active:brightness-95',
     primary:
-      'bg-gradient-to-r from-[#3B8FE8] to-[#3ED9E8] text-white font-semibold shadow-md hover:brightness-105 active:brightness-95',
+      'bg-[#FF6A3D] text-[#15110E] shadow-[0_3px_0_#B8431F] active:translate-y-[2px] active:shadow-[0_1px_0_#B8431F] hover:brightness-105',
+    gradient:
+      'bg-[#FF6A3D] text-[#15110E] shadow-[0_3px_0_#B8431F] active:translate-y-[2px] active:shadow-[0_1px_0_#B8431F] hover:brightness-105',
     outline:
-      'bg-transparent text-main border border-border hover:bg-surface-elevated hover:border-[#3B8FE8]/40 shadow-soft-sm',
+      'bg-surface text-main border border-border shadow-[0_2px_0_rgba(0,0,0,0.06)] hover:bg-surface-2 active:translate-y-[1px] active:shadow-none',
     ghost:
-      'bg-transparent text-main hover:bg-surface-subtle active:bg-surface-elevated',
+      'bg-transparent text-main hover:bg-surface-2 active:bg-surface-2',
     danger:
-      'bg-[#FF5A36] text-white font-semibold shadow-md hover:brightness-105 active:brightness-95',
+      'bg-[#E8452C] text-white shadow-[0_3px_0_#A82A16] active:translate-y-[2px] active:shadow-[0_1px_0_#A82A16] hover:brightness-105',
   }
 
-  const chosenVariant = variantStyles[variant] || variantStyles.gradient
+  const chosenVariant = variantStyles[variant] || variantStyles.primary
   const widthStyle = fullWidth ? 'w-full' : ''
 
   return (

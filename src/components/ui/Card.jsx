@@ -1,55 +1,41 @@
 import React from 'react'
 
 /**
- * Studio-Grade Card Component
- * Not a flat boring box: includes subtle rim light, depth elevation, optional circle accent strip, and interactive lift.
- * 
- * @param {Object} props
- * @param {'default' | 'elevated' | 'subtle' | 'interactive' | 'glass'} [props.variant='default']
- * @param {'none' | 'coral' | 'magenta' | 'mustard' | 'lime' | 'biru' | 'ungu'} [props.accentStrip='none']
- * @param {boolean} [props.asymmetric=false]
- * @param {string} [props.className]
- * @param {React.ReactNode} props.children
+ * Human-Crafted Card Component
+ * - Radius 18px (deliberately different from 4px photo frame)
+ * - 1px border, no thick blurry shadows
+ * - Solid surfaces
  */
 export default function Card({
   variant = 'default',
   accentStrip = 'none',
-  asymmetric = false,
   className = '',
   children,
   ...props
 }) {
   const variantStyles = {
-    default: 'bg-surface border border-border shadow-soft',
-    elevated: 'bg-surface-elevated border border-border/80 shadow-soft-lg',
-    subtle: 'bg-surface-subtle border border-border/60',
-    interactive: 'bg-surface border border-border shadow-soft hover:-translate-y-1 hover:shadow-soft-lg active:translate-y-0 cursor-pointer transition-all duration-200',
-    glass: 'bg-surface/85 backdrop-blur-md border border-border/70 shadow-soft',
+    default: 'bg-surface border border-border',
+    elevated: 'bg-surface border border-border shadow-[0_2px_8px_rgba(0,0,0,0.06)]',
+    subtle: 'bg-surface-2 border border-border',
+    interactive: 'bg-surface border border-border hover:border-accent/40 cursor-pointer transition-colors duration-150',
   }
 
   const accentStripColors = {
     none: '',
-    coral: 'border-l-4 border-l-coral',
-    magenta: 'border-l-4 border-l-magenta',
-    mustard: 'border-l-4 border-l-mustard',
-    lime: 'border-l-4 border-l-lime',
-    biru: 'border-l-4 border-l-biru',
-    ungu: 'border-l-4 border-l-ungu',
+    tomat: 'border-l-4 border-l-[#E8452C]',
+    kunyit: 'border-l-4 border-l-[#F2B134]',
+    pandan: 'border-l-4 border-l-[#4FA05A]',
+    laut: 'border-l-4 border-l-[#1E9C93]',
+    tinta: 'border-l-4 border-l-[#4A63D6]',
+    dadu: 'border-l-4 border-l-[#F08CAE]',
+    jingga: 'border-l-4 border-l-[#FF6A3D]',
   }
-
-  // Design System Standard: Card (rounded-2xl)
-  const cornerStyles = asymmetric
-    ? 'rounded-tl-3xl rounded-br-3xl rounded-tr-xl rounded-bl-xl'
-    : 'rounded-2xl'
 
   return (
     <div
-      className={`relative overflow-hidden ${cornerStyles} ${variantStyles[variant]} ${accentStripColors[accentStrip]} ${className}`}
+      className={`rounded-[18px] ${variantStyles[variant] || variantStyles.default} ${accentStripColors[accentStrip] || ''} ${className}`}
       {...props}
     >
-      {/* Subtle top inner light rim for studio depth effect */}
-      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-
       {children}
     </div>
   )
